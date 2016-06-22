@@ -41,7 +41,8 @@ There is presently no _installation_ target so just use the resultant binary dir
 To release a Deen version, edit the version number in the Makefile.  To obtain a release version;
 
 ```
-make clean release RELEASE=1
+make clean
+make RELEASE=1
 ```
 
 ## Data
