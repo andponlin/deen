@@ -1,0 +1,13 @@
+.*
+*.o
+*.a
+nbproject
+entry_parse.c
+deen
+leidx2/lefiletoolstest
+leidx2/leidxdumptest
+leidx2/leidxindextest
+leidx2/leidxoptimisetest
+leidx2/leidxsearchtest
+leidx2/leucconverttest
+leidx2/testoutputs/*
