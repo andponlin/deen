@@ -616,8 +616,8 @@ deen_bool deen_for_each_word_from_file(
 
 
 void deen_for_each_word(
-	uint8_t *s, size_t offset,
-	void (*eachword_callback)(uint8_t *s, size_t offset, size_t len, void *context),
+	const uint8_t *s, size_t offset,
+	deen_bool (*eachword_callback)(const uint8_t *s, size_t offset, size_t len, void *context),
 	void *context
 ) {
 
@@ -636,10 +636,13 @@ void deen_for_each_word(
 			end++;
 		}
 
-		if (end!=offset) {
-			eachword_callback(s, offset, end-offset, context);
-			offset = end;
-
+		if (end != offset) {
+			if (DEEN_TRUE != eachword_callback(s, offset, end-offset, context)) {
+				offset = len;
+			}
+			else {
+				offset = end;
+			}
 		}
 	}
 }
@@ -685,7 +688,7 @@ void *deen_emalloc(size_t size) {
 
 void *deen_erealloc(void *ptr, size_t size) {
 	void *r = (void *) realloc(ptr,size);
-	if (NULL==r) { 
+	if (NULL==r) {
 		deen_log_error_and_exit("memory exhaustion on realloc");
 	}
 	return r;

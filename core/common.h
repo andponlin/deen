@@ -5,7 +5,7 @@
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
- 
+
 #ifndef __COMMON_H
 #define __COMMON_H
 
@@ -96,8 +96,9 @@ For each non-trivial word in the source text, call the callback function.
 */
 
 void deen_for_each_word(
-	uint8_t *s, size_t offset,
-	void (*eachword_callback)(uint8_t *s, size_t offset, size_t len, void *context),
+	const uint8_t *s,
+	size_t offset,
+	deen_bool (*eachword_callback)(const uint8_t *s, size_t offset, size_t len, void *context),
 	void *context
 );
 

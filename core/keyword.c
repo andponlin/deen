@@ -13,6 +13,7 @@
 #include "common.h"
 #include "constants.h"
 
+
 static size_t deen_keywords_sequence_count_or_exit(const uint8_t *c, size_t len) {
 	size_t sequence_count;
 
@@ -160,11 +161,49 @@ size_t deen_keywords_longest_keyword(deen_keywords *keywords) {
 }
 
 
-deen_bool deen_keywords_all_present(deen_keywords *keywords, const uint8_t *input) {
-	size_t input_len = strlen((char *) input);
+typedef struct deen_keywords_one_present_context deen_keywords_one_present_context;
+struct deen_keywords_one_present_context {
+	deen_bool found;
+	const uint8_t *keyword;
+	size_t keyword_len;
+};
 
+
+static deen_bool deen_keywords_one_present_callback(
+	const uint8_t *s, size_t offset, size_t len,
+	void *context) {
+
+	deen_keywords_one_present_context *context2 = (deen_keywords_one_present_context *) context;
+
+	if (context2->keyword_len <= len) {
+		if(DEEN_TRUE == deen_imatches_at(s, context2->keyword, 0)) {
+			context2->found = DEEN_TRUE;
+			return DEEN_FALSE;
+		}
+	}
+
+	return DEEN_TRUE;
+}
+
+
+/*
+Returns true if the supplied keyword exists at the start of a word in the
+input.
+*/
+
+static deen_bool deen_keywords_one_present(const uint8_t *keyword, const uint8_t *input) {
+	deen_keywords_one_present_context context;
+	context.found = DEEN_FALSE;
+	context.keyword = keyword;
+	context.keyword_len = strlen((char *) keyword);
+	deen_for_each_word(input, 0, &deen_keywords_one_present_callback, &context);
+	return context.found;
+}
+
+
+deen_bool deen_keywords_all_present(deen_keywords *keywords, const uint8_t *input) {
     for (uint32_t i=0;i < keywords->count; i++) {
-		if (DEEN_NOT_FOUND == deen_ifind_first(input, keywords->keywords[i], 0, input_len)) {
+		if (DEEN_FALSE == deen_keywords_one_present(keywords->keywords[i], input)) {
 		    return DEEN_FALSE;
 		}
     }
