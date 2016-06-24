@@ -82,12 +82,27 @@ static void deen_render_plain_text_highlights(
 				size_t keyword_len = strlen((char *) first_keyword.keyword);
 				deen_term_print_str_range(text, upto, first_keyword.offset);
 
-				fputs(TTYRED, stdout);
+				// need to make sure that highlighting is only happening at
+				// the prefix of a word and is not finding text 'randomly'
+				// within the line.
+
+				deen_bool is_valid_keyword_found =
+					0 == first_keyword.offset ||
+					isspace(text[first_keyword.offset-1]) ||
+					ispunct(text[first_keyword.offset-1]);
+
+				if(is_valid_keyword_found) {
+					fputs(TTYRED, stdout);
+				}
+				
 				deen_term_print_str_range(
 					text,
 					first_keyword.offset,
 					first_keyword.offset + keyword_len);
-				fputs(TTYSEQRESET, stdout);
+
+				if(is_valid_keyword_found) {
+					fputs(TTYSEQRESET, stdout);
+				}
 
 				upto = first_keyword.offset + keyword_len;
 			}
