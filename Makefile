@@ -29,12 +29,12 @@ CFLAGSFLEXOTHER=-c -I .
 # -fstack-protector; checks for operations happening on the stack.  Requires
 # also use of -lssp
 
-ifdef RELEASE
+ifdef DEBUG
+	CFLAGS=-g -gdwarf-2 -ggdb -DDEBUG
+	LDFLAGS=-g -gdwarf-2 -ggdb
+else
 	CFLAGS=-O
 	LDFLAGS=-dead_strip
-else
-	CFLAGS=-g -gdwarf-2 -ggdb
-	LDFLAGS=-g -gdwarf-2 -ggdb
 endif
 
 COREOBJS=core/common.o core/entry.o core/entry_parse.o core/install.o \

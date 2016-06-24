@@ -110,7 +110,7 @@ struct deen_entry_calculate_distance_from_keywords_foreachword_callback_state
 
 
 size_t deen_entry_find_first_keyword(
-	uint8_t *s,
+	const uint8_t *s,
 	deen_keywords *keywords,
 	uint32_t offset) {
 
@@ -124,8 +124,8 @@ size_t deen_entry_find_first_keyword(
 }
 
 
-void deen_entry_calculate_distance_from_keywords_foreachword_callback(
-	uint8_t *s, size_t offset, size_t len, void *context) {
+deen_bool deen_entry_calculate_distance_from_keywords_foreachword_callback(
+	const uint8_t *s, size_t offset, size_t len, void *context) {
 
 	deen_entry_calculate_distance_from_keywords_foreachword_callback_state *state =
 		(deen_entry_calculate_distance_from_keywords_foreachword_callback_state *) context;
@@ -160,6 +160,8 @@ void deen_entry_calculate_distance_from_keywords_foreachword_callback(
 
 		}
 	}
+
+	return DEEN_TRUE;
 }
 
 

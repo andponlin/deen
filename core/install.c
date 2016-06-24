@@ -599,6 +599,15 @@ uint8_t deen_install_from_path(
 			DEEN_INSTALL_RAISE_ERROR
 		}
 
+		// print out the performance of the indexing with respect to database
+		// activity
+
+#ifdef DEBUG
+		DEEN_LOG_INFO1("db activity; find existing prefixes = %llu ms", index_context.index_add_context->find_existing_prefixes_millis);
+		DEEN_LOG_INFO1("db activity; add missing prefixes = %llu ms", index_context.index_add_context->add_missing_prefixes_millis);
+		DEEN_LOG_INFO1("db activity; add refs = %llu ms", index_context.index_add_context->add_refs_millis);
+#endif
+
 		// flush any indexes to the database.
 
 		deen_index_flush_context_prefixes_to_index(&index_context);

@@ -36,6 +36,12 @@ time_t deen_seconds_since_epoc() {
 	return tp.tv_sec;
 }
 
+deen_millis deen_millis_since_epoc() {
+	struct timeval te;
+	gettimeofday(&te, NULL);
+	return (deen_millis) (te.tv_sec * 1000LL) + (te.tv_usec / 1000);
+}
+
 uint32_t deen_max(uint32_t x, uint32_t y) {
 	if (x > y) {
 		return x;

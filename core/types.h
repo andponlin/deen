@@ -5,7 +5,7 @@
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
- 
+
 #ifndef __TYPES_H
 #define __TYPES_H
 
@@ -20,6 +20,12 @@ This provides a type for a boolean (actually a byte).
 */
 
 typedef uint8_t deen_bool;
+
+/*
+Represents a quantity of milliseconds.
+*/
+
+typedef unsigned long long deen_millis;
 
 /*
 When seeing how long a UTF-8 sequence is, the function will return
@@ -112,10 +118,18 @@ struct deen_index_add_context {
 	sqlite3 *db;
 
 	sqlite3_stmt *prefix_insert_stmt;
-	sqlite3_stmt *ref_insert_stmt;
 
 	sqlite3_stmt **find_existing_prefixes_stmts;
 	size_t find_existing_prefixes_stmts_count;
+
+	sqlite3_stmt **ref_insert_stmts;
+	size_t ref_insert_stmts_count;
+
+#ifdef DEBUG
+	deen_millis find_existing_prefixes_millis;
+	deen_millis add_missing_prefixes_millis;
+	deen_millis add_refs_millis;
+#endif
 
 };
 

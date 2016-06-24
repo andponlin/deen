@@ -24,6 +24,8 @@
 
 time_t deen_seconds_since_epoc();
 
+deen_millis deen_millis_since_epoc();
+
 /*
 Returns the maximum of the two supplied integer values.
 */

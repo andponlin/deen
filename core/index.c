@@ -23,7 +23,7 @@
 // adding
 #define SQL_PREFIX_BULK_FETCH "SELECT id, prefix FROM deen_prefix WHERE prefix IN "
 #define SQL_PREFIX_INSERT "INSERT INTO deen_prefix(prefix) VALUES (?)"
-#define SQL_REF_INSERT "INSERT INTO deen_ref (deen_prefix_id, ref) VALUES (?,?)"
+#define SQL_PREFIX_REF_INSERT "INSERT INTO deen_ref (deen_prefix_id, ref) VALUES "
 
 // searching
 #define SQL_REF_LOOKUP "SELECT r.ref FROM deen_ref r JOIN deen_prefix p ON p.id = r.deen_prefix_id WHERE p.prefix = ?"
@@ -71,12 +71,6 @@ void deen_index_add_context_free(deen_index_add_context *context) {
 			}
 		}
 
-		if (NULL!= context->ref_insert_stmt) {
-			if (SQLITE_OK != sqlite3_finalize(context->ref_insert_stmt)) {
-				deen_log_error_and_exit("sqllite error finalizing ref insert stmt; %s", sqlite3_errmsg(context->db));
-			}
-		}
-
 		if (0 != context->find_existing_prefixes_stmts_count) {
 			for (int i=0; i<context->find_existing_prefixes_stmts_count; i++) {
 				if (NULL != context->find_existing_prefixes_stmts[i]) {
@@ -87,6 +81,18 @@ void deen_index_add_context_free(deen_index_add_context *context) {
 			}
 
 			free((void *) context->find_existing_prefixes_stmts);
+		}
+
+		if (0 != context->ref_insert_stmts_count) {
+			for (int i=0; i<context->ref_insert_stmts_count; i++) {
+				if (NULL != context->ref_insert_stmts[i]) {
+					if (SQLITE_OK != sqlite3_finalize(context->ref_insert_stmts[i])) {
+						deen_log_error_and_exit("sqllite error finalizing find existing prefixes stmt; %s", sqlite3_errmsg(context->db));
+					}
+				}
+			}
+
+			free((void *) context->ref_insert_stmts);
 		}
 	}
 }
@@ -142,6 +148,56 @@ static sqlite3_stmt *deen_index_get_or_create_find_existing_prefixes_stmt(
 	}
 
 	return index_add_context->find_existing_prefixes_stmts[prefix_count - 1];
+}
+
+
+static sqlite3_stmt *deen_index_get_or_create_ref_insert_stmt(
+	deen_index_add_context *index_add_context,
+	size_t tuple_count) {
+
+	if (tuple_count > 1000) {
+		deen_log_error_and_exit("proposterous quantity of tupls to insert; %u", tuple_count);
+	}
+
+	if (tuple_count >= index_add_context->ref_insert_stmts_count) {
+		index_add_context->ref_insert_stmts = deen_erealloc(
+			index_add_context->ref_insert_stmts,
+			sizeof(sqlite3_stmt *) * tuple_count
+		);
+
+		for (
+			size_t i=index_add_context->ref_insert_stmts_count;
+			i < tuple_count;
+			i++) {
+			index_add_context->ref_insert_stmts[i] = NULL;
+		}
+	}
+
+	if(NULL == index_add_context->ref_insert_stmts[tuple_count - 1]) {
+		size_t len = strlen(SQL_PREFIX_REF_INSERT) + (size_t) (tuple_count * 6);
+		char *sql = deen_emalloc(len + 1); // +1 for the NULL at the end
+		strcpy(sql, SQL_PREFIX_REF_INSERT);
+
+		for (uint32_t i = 0; i < tuple_count; i++) {
+			if (0 != i) {
+				strcat(sql, ",");
+			}
+
+			strcat(sql, "(?,?)");
+		}
+
+		if (SQLITE_OK != sqlite3_prepare_v2(
+			index_add_context->db,
+			sql, len,
+			&(index_add_context->ref_insert_stmts[tuple_count - 1]),
+			NULL)) {
+			deen_log_error_and_exit("sqllite error preparing statement for [%s]; %s", sql, sqlite3_errmsg(index_add_context->db));
+		}
+
+		free((void *) sql);
+	}
+
+	return index_add_context->ref_insert_stmts[tuple_count - 1];
 }
 
 
@@ -271,36 +327,28 @@ static void deen_index_add_refs(
 	uint32_t *prefix_ids,
 	uint32_t prefix_count) {
 
-	if (NULL == index_add_context->ref_insert_stmt) {
-		if (SQLITE_OK != sqlite3_prepare_v2(
-			index_add_context->db,
-			SQL_REF_INSERT,
-			-1,
-			&(index_add_context->ref_insert_stmt),
-			NULL)
-		) {
-			deen_log_error_and_exit("sqllite error preparing statement for [%s]; %s", SQL_REF_INSERT, sqlite3_errmsg(index_add_context->db));
-		}
-	}
+	sqlite3_stmt *stmt = deen_index_get_or_create_ref_insert_stmt(
+		index_add_context,
+		prefix_count);
 
 	for (uint32_t i = 0;i<prefix_count;i++) {
 
-		if (SQLITE_OK != sqlite3_bind_int(index_add_context->ref_insert_stmt, 1, prefix_ids[i])) {
-			deen_log_error_and_exit("sqllite error binding into statement for [%s]; %s", SQL_REF_INSERT, sqlite3_errmsg(index_add_context->db));
+		if (SQLITE_OK != sqlite3_bind_int(stmt, 1 + (2 * i), prefix_ids[i])) {
+			deen_log_error_and_exit("sqllite error binding into statement for add indexes; %s", sqlite3_errmsg(index_add_context->db));
 		}
 
-		if (SQLITE_OK != sqlite3_bind_int(index_add_context->ref_insert_stmt, 2, (int) ref)) {
-			deen_log_error_and_exit("sqllite error binding into statement for [%s]; %s", SQL_REF_INSERT, sqlite3_errmsg(index_add_context->db));
+		if (SQLITE_OK != sqlite3_bind_int(stmt, 2 + (2 * i), (int) ref)) {
+			deen_log_error_and_exit("sqllite error binding into statement for add indexes; %s", sqlite3_errmsg(index_add_context->db));
 		}
 
-		if (SQLITE_DONE != sqlite3_step(index_add_context->ref_insert_stmt)) {
-			deen_log_error_and_exit("sqllite error executing [%s]; %s", SQL_REF_INSERT, sqlite3_errmsg(index_add_context->db));
-		}
+	}
 
-		if (SQLITE_OK != sqlite3_reset(index_add_context->ref_insert_stmt)) {
-			deen_log_error_and_exit("sqllite error resetting stmt [%s]; %s", SQL_REF_INSERT, sqlite3_errmsg(index_add_context->db));
-		}
+	if (SQLITE_DONE != sqlite3_step(stmt)) {
+		deen_log_error_and_exit("sqllite error executing add indexes; %s", sqlite3_errmsg(index_add_context->db));
+	}
 
+	if (SQLITE_OK != sqlite3_reset(stmt)) {
+		deen_log_error_and_exit("sqllite error resetting stmt for add indexes; %s", sqlite3_errmsg(index_add_context->db));
 	}
 }
 
@@ -318,9 +366,32 @@ void deen_index_add(
 
 	uint32_t *prefix_ids = deen_emalloc(prefix_count * sizeof(uint32_t));
 	bzero(prefix_ids, sizeof(uint32_t) * prefix_count);
+
+#ifdef DEBUG
+	deen_millis start_ms = deen_millis_since_epoc();
+#endif
+
 	deen_index_find_existing_prefixes(index_add_context, prefixes, prefix_count, prefix_ids);
+
+#ifdef DEBUG
+	deen_millis after_find_existing_prefixes_ms = deen_millis_since_epoc();
+	index_add_context->find_existing_prefixes_millis += (after_find_existing_prefixes_ms - start_ms);
+#endif
+
 	deen_index_add_missing_prefixes(index_add_context, prefixes, prefix_count, prefix_ids);
+
+#ifdef DEBUG
+	deen_millis after_add_missing_prefixes_ms = deen_millis_since_epoc();
+	index_add_context->add_missing_prefixes_millis += (after_add_missing_prefixes_ms - after_find_existing_prefixes_ms);
+#endif
+
 	deen_index_add_refs(index_add_context, ref, prefix_ids, prefix_count);
+
+#ifdef DEBUG
+	deen_millis after_add_refs_ms = deen_millis_since_epoc();
+	index_add_context->add_refs_millis += (after_add_refs_ms - after_add_missing_prefixes_ms);
+#endif
+
 	free(prefix_ids);
 
 }

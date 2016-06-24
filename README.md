@@ -19,7 +19,7 @@ This software is designed to be built and run in a UN*X-like environment.  To bu
 * SQL-Lite Version 3
 * Flex
 
-To build the software run the ```make``` command at the top level.  This will fairly quickly produce a ```deen``` executable.
+To build the software run the ```make``` command at the top level.  This will fairly quickly produce a ```deen``` executable.  If you want to get a debug build use ```make DEBUG=1```.
 
 ### Debian
 
@@ -42,7 +42,7 @@ To release a Deen version, edit the version number in the Makefile.  To obtain a
 
 ```
 make clean
-make RELEASE=1
+make
 ```
 
 ## Data
