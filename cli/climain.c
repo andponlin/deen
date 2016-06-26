@@ -213,8 +213,18 @@ static void deen_cli_query(deen_cli_args *args) {
 
 	char *deen_root_dir = deen_cli_root_dir();
 	deen_keywords *keywords = deen_keywords_create();
+	size_t search_expression_len = strlen((char *) args->search_expression);
+	uint8_t *search_expression_upper = (uint8_t *) deen_emalloc(
+		sizeof(uint8_t) * (search_expression_len + 1));
 
-	deen_keywords_add_from_string(keywords, args->search_expression);
+	memcpy(
+		search_expression_upper,
+		args->search_expression,
+		search_expression_len);
+
+	deen_to_upper(search_expression_upper);
+
+	deen_keywords_add_from_string(keywords, search_expression_upper);
 
 	// dump out the keywords for now
 	deen_cli_trace_keywords(keywords);
@@ -245,6 +255,7 @@ static void deen_cli_query(deen_cli_args *args) {
     deen_keywords_free(keywords);
 
     free((void *) deen_root_dir);
+	free((void *) search_expression_upper);
 }
 
 

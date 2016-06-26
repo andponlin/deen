@@ -260,6 +260,9 @@ static deen_search_result *deen_search_refs_to_result(
 					}
 
 				}
+				else {
+					DEEN_LOG_TRACE2("keywords not found in; %s :: %s", german_c, english_c);
+				}
 			}
 		}
 	}

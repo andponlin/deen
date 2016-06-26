@@ -42,10 +42,20 @@ COREOBJS=core/common.o core/entry.o core/entry_parse.o core/install.o \
 CLIOBJS=cli/climain.o cli/renderplain.o cli/rendercommon.o
 LDFLAGSOTHER=-lsqlite3
 
+TESTKEYWORDOBJS=core-test/keyword-test.o
+
 all: deen
 
 deen: $(CLILIBS) $(COREOBJS) $(CLIOBJS)
 	$(CC) $(CLIOBJS) $(COREOBJS) -o deen $(LDFLAGS) $(LDFLAGSOTHER)
+
+# ----------------------------------
+
+tests: deen-keyword-test
+	./deen-keyword-test
+
+deen-keyword-test: $(COREOBJS) $(TESTKEYWORDOBJS)
+	$(CC) $(TESTKEYWORDOBJS) $(COREOBJS) -o deen-keyword-test $(LDFLAGS) $(LDFLAGSOTHER)
 
 # ----------------------------------
 

@@ -4,6 +4,7 @@
 nbproject
 entry_parse.c
 deen
+deen-*-test
 leidx2/lefiletoolstest
 leidx2/leidxdumptest
 leidx2/leidxindextest

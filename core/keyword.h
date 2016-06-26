@@ -17,7 +17,12 @@ deen_keywords *deen_keywords_create();
 
 void deen_keywords_free(deen_keywords *keywords);
 
-void deen_keywords_add_from_string(deen_keywords *keywords, uint8_t *input);
+/*
+Adds all of the keywords found in the input into the list of keywords.
+It expects that the 'input' string is already in upper case.
+*/
+
+void deen_keywords_add_from_string(deen_keywords *keywords, const uint8_t *input);
 
 size_t deen_keywords_longest_keyword(deen_keywords *keywords);
 

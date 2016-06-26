@@ -83,7 +83,7 @@ void deen_keywords_free(deen_keywords *keywords) {
 
 static deen_bool deen_keywords_has_prefix(
 	deen_keywords *keywords,
-	uint8_t *prefix,
+	const uint8_t *prefix,
 	size_t prefix_len) {
 
 	for (uint32_t i=0;i<keywords->count;i++) {
@@ -96,11 +96,9 @@ static deen_bool deen_keywords_has_prefix(
 }
 
 
-void deen_keywords_add_from_string(deen_keywords *keywords, uint8_t *input) {
+void deen_keywords_add_from_string(deen_keywords *keywords, const uint8_t *input) {
 
-	deen_to_upper(input);
-
-	size_t input_length = strlen((char *)input);
+	size_t input_length = strlen((char *) input);
 	size_t i = 0;
 
 	while (i < input_length) {
@@ -176,7 +174,7 @@ static deen_bool deen_keywords_one_present_callback(
 	deen_keywords_one_present_context *context2 = (deen_keywords_one_present_context *) context;
 
 	if (context2->keyword_len <= len) {
-		if(DEEN_TRUE == deen_imatches_at(s, context2->keyword, 0)) {
+		if(DEEN_TRUE == deen_imatches_at(s, context2->keyword, offset)) {
 			context2->found = DEEN_TRUE;
 			return DEEN_FALSE;
 		}
