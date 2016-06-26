@@ -1,3 +1,11 @@
+/*
+ * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Distributed under the terms of the MIT License.
+ *
+ * Authors:
+ *		Andrew Lindesay, apl@lindesay.co.nz
+ */
+ 
 #import "core/types.h"
 #import "core/common.h"
 #import "core/keyword.h"
