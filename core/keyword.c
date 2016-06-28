@@ -96,42 +96,43 @@ static deen_bool deen_keywords_has_prefix(
 }
 
 
+static deen_bool add_keywords_add_from_string_callback(
+	const uint8_t *s, size_t offset, size_t len, void *context) {
+
+	deen_keywords *keywords = (deen_keywords *) context;
+
+	if(
+		!deen_is_common_upper_word(&s[offset], len) &&
+		!deen_keywords_has_prefix(keywords, &s[offset], len)) {
+
+		size_t keyword_size = sizeof(uint8_t) * (len + 1);
+
+		if (0==keywords->count) {
+			keywords->count = 1;
+			keywords->keywords = (uint8_t **) deen_emalloc(sizeof(uint8_t *));
+			keywords->keywords[0] = (uint8_t *) deen_emalloc(keyword_size);
+		}
+		else {
+			keywords->count++;
+			keywords->keywords = (uint8_t **) deen_erealloc(
+				keywords->keywords,
+				sizeof(uint8_t *) * keywords->count);
+			keywords->keywords[keywords->count-1] = (uint8_t *) deen_emalloc(keyword_size);
+		}
+
+		keywords->keywords[keywords->count-1][len] = 0;
+		memcpy(keywords->keywords[keywords->count-1], &s[offset], len);
+	}
+
+	return DEEN_TRUE;
+}
+
 void deen_keywords_add_from_string(deen_keywords *keywords, const uint8_t *input) {
 
-	size_t input_length = strlen((char *) input);
-	size_t i = 0;
-
-	while (i < input_length) {
-		size_t start;
-
-		while ((i<input_length) && isspace(input[i])) i++;
-		start = i;
-		while ((i<input_length) && !isspace(input[i])) i++;
-
-		if (i>start &&
-			!deen_is_common_upper_word(&input[start], i-start) &&
-			!deen_keywords_has_prefix(keywords, &input[start], i-start)) {
-
-			size_t keyword_len = i-start;
-			size_t keyword_size = sizeof(uint8_t) * (keyword_len + 1);
-
-			if (0==keywords->count) {
-				keywords->count = 1;
-				keywords->keywords = (uint8_t **) deen_emalloc(sizeof(uint8_t *));
-				keywords->keywords[0] = (uint8_t *) deen_emalloc(keyword_size);
-			}
-			else {
-				keywords->count++;
-				keywords->keywords = (uint8_t **) deen_erealloc(
-					keywords->keywords,
-					sizeof(uint8_t *) * keywords->count);
-				keywords->keywords[keywords->count-1] = (uint8_t *) deen_emalloc(keyword_size);
-			}
-
-			keywords->keywords[keywords->count-1][keyword_len] = 0;
-			memcpy(keywords->keywords[keywords->count-1], &input[start], keyword_len);
-		}
-    }
+	deen_for_each_word(
+		input, 0,
+		&add_keywords_add_from_string_callback,
+		(void *) keywords);
 
 	// we need to go through the keywords now and sort them by size;
 	// doing this makes some latter algorithms more easy and more
@@ -175,6 +176,7 @@ static deen_bool deen_keywords_one_present_callback(
 
 	if (context2->keyword_len <= len) {
 		if(DEEN_TRUE == deen_imatches_at(s, context2->keyword, offset)) {
+			DEEN_LOG_TRACE3("found [%s] at %llu in [%s]", context2->keyword, offset, s);
 			context2->found = DEEN_TRUE;
 			return DEEN_FALSE;
 		}

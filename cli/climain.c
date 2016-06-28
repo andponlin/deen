@@ -209,7 +209,7 @@ static void deen_cli_trace_keywords(deen_keywords *keywords) {
 	uint32_t i;
 
 	for(i=0;i<keywords->count;i++) {
-		DEEN_LOG_TRACE2("keyword %u; %s", i, keywords->keywords[i]);
+		DEEN_LOG_TRACE2("keyword %u; [%s]", i, keywords->keywords[i]);
 	}
 }
 
@@ -222,6 +222,7 @@ static void deen_cli_query(deen_cli_args *args) {
 	uint8_t *search_expression_upper = (uint8_t *) deen_emalloc(
 		sizeof(uint8_t) * (search_expression_len + 1));
 
+	search_expression_upper[search_expression_len] = 0;
 	memcpy(
 		search_expression_upper,
 		args->search_expression,
@@ -229,6 +230,7 @@ static void deen_cli_query(deen_cli_args *args) {
 
 	deen_to_upper(search_expression_upper);
 
+	DEEN_LOG_TRACE2("keywords; [%s] --> [%s]", args->search_expression, search_expression_upper);
 	deen_keywords_add_from_string(keywords, search_expression_upper);
 
 	// dump out the keywords for now
