@@ -108,6 +108,11 @@ static void deen_cli_validate_args(deen_cli_args *args) {
 			deen_log_error_and_exit("when indexing, search arguments are not allowed");
 		}
 	}
+	else {
+		if (NULL == args->search_expression || 0 == args->search_expression[0]) {
+			deen_log_error_and_exit("a search expression was expected");
+		}
+	}
 }
 
 
