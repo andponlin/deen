@@ -1,5 +1,9 @@
 # Deen Change-Log
 
+## 0.1.4 (alpha) -- pending
+
+* bug fix
+
 ## 0.1.3 (alpha)
 
 * Fix to search - was missing some results
