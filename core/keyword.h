@@ -24,6 +24,10 @@ It expects that the 'input' string is already in upper case.
 
 void deen_keywords_add_from_string(deen_keywords *keywords, const uint8_t *input);
 
+/*
+This function is returning size as in bytes, not characters.
+*/
+
 size_t deen_keywords_longest_keyword(deen_keywords *keywords);
 
 /*

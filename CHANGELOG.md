@@ -2,7 +2,7 @@
 
 ## 0.1.4 (alpha) -- pending
 
-* bug fix
+* bug fixes
 
 ## 0.1.3 (alpha)
 
