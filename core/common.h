@@ -51,7 +51,9 @@ size_t deen_utf8_crop_to_unicode_len(
 /*
 A UTF-8 string may consist of a number of UTF-8 sequences.  This
 function will count the number of such sequences in a string
-supplied to this function.
+supplied to this function.  This is effectively the number of
+characters in the string as opposed to the number of bytes that
+the storage of the string takes up.
 */
 
 deen_utf8_sequence_result deen_utf8_sequences_count(
