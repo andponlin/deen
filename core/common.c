@@ -42,14 +42,6 @@ deen_millis deen_millis_since_epoc() {
 	return (deen_millis) (te.tv_sec * 1000LL) + (te.tv_usec / 1000);
 }
 
-uint32_t deen_max(uint32_t x, uint32_t y) {
-	if (x > y) {
-		return x;
-	}
-
-	return y;
-}
-
 // ------------------------------------------------
 // STRINGS
 // ------------------------------------------------
@@ -128,16 +120,19 @@ deen_bool deen_is_common_upper_word(const uint8_t *s, size_t len) {
 		    return DEEN_TRUE;
 
 		case 3:
-			if (0 == memcmp(s, COMMON_FUER, 4)) { // the german fuer is a special case with accented characters.
-				return DEEN_TRUE;
-			}
-
 			if (deen_is_common_word_upper_from_list(s,len,COMMON_3)) {
 				return DEEN_TRUE;
 			}
 			break;
 
 		case 4:
+			// the german 'fuer' is a special case with accented characters.
+			// the length of 4 is in consideration of byte not characters.
+
+			if (0 == memcmp(s, COMMON_FUER, 4)) {
+				return DEEN_TRUE;
+			}
+
 			if (deen_is_common_word_upper_from_list(s,len,COMMON_4)) {
 				return DEEN_TRUE;
 			}
@@ -296,8 +291,8 @@ uint8_t *deen_strnchr(uint8_t *a, uint8_t b, size_t len) {
 }
 
 
-uint8_t *deen_utf8_usascii_equivalent(uint8_t *c, size_t c_length) {
-	if (c_length > 2 && c[0] == 0xc3) {
+uint8_t *deen_utf8_usascii_equivalent(const uint8_t *c, size_t c_length) {
+	if (c_length >= 2 && c[0] == 0xc3) {
 		switch (c[1]) {
 			case 0xab: return (uint8_t *) "ee";
 			case 0xb6: return (uint8_t *) "oe";
@@ -321,7 +316,7 @@ uint8_t *deen_utf8_usascii_equivalent(uint8_t *c, size_t c_length) {
 
 
 deen_bool deen_utf8_is_usascii_clean(
-	uint8_t *c,
+	const uint8_t *c,
 	size_t c_length) {
 
 	uint32_t *c_asint = (uint32_t *) c;

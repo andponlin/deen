@@ -26,20 +26,14 @@ time_t deen_seconds_since_epoc();
 
 deen_millis deen_millis_since_epoc();
 
-/*
-Returns the maximum of the two supplied integer values.
-*/
-
-uint32_t deen_max(uint32_t x, uint32_t y);
-
 // ---------------------------------------------------------------
 // STRINGS
 // ---------------------------------------------------------------
 
-uint8_t *deen_utf8_usascii_equivalent(uint8_t *c, size_t c_length);
+uint8_t *deen_utf8_usascii_equivalent(const uint8_t *c, size_t c_length);
 
 deen_bool deen_utf8_is_usascii_clean(
-	uint8_t *c,
+	const uint8_t *c,
 	size_t c_length);
 
 /*
