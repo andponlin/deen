@@ -11,6 +11,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 static void test_utf8_usascii_equivalent() {
 	if (0 != strcmp((char *) deen_utf8_usascii_equivalent((uint8_t *) "\xc3\x9c", 2), "UE")) {
@@ -145,6 +148,114 @@ static void test_utf8_sequence_len__non_accented() {
 	DEEN_LOG_INFO0("passed test 'test_utf8_sequence_len__non_accented'");
 }
 
+// ---------------------------------------------------------------
+// FOR EACH WORD
+// ---------------------------------------------------------------
+
+/*
+This call-back method can be employed to produce the sample output that is then
+subsequently read-in for processing.
+*/
+
+/*
+static deen_bool test_for_each_word_from_file_reference_callback(
+	const uint8_t *s,
+	size_t len,
+	off_t ref, // offset after last newline.
+	float progress,
+	void *context) {
+
+	printf("%llu,", ref);
+
+	for(size_t i = 0;i < len; i++) {
+		putc(s[i], stdout);
+	}
+
+	printf("\n");
+
+	return DEEN_TRUE; // keep processing.
+}
+*/
+
+
+/*
+This callback is used to check the words found are as expected based on a
+reference output that was generated previously.
+*/
+
+static deen_bool test_for_each_word_from_file_check_callback(
+	const uint8_t *s,
+	size_t len,
+	off_t ref, // offset after last newline.
+	float progress,
+	void *context) {
+
+	FILE *reference_file = (FILE *) context;
+	int reference_ref = -1;
+	uint8_t reference_word[32];
+
+	if (2 != fscanf(
+		reference_file, "%d,%s\n",
+		&reference_ref, (char *) reference_word)) {
+		deen_log_error_and_exit("failed test 'test_for_each_word_from_file' -- unable to read the required reference data");
+	}
+
+	if (ref != (off_t) reference_ref) {
+		deen_log_error_and_exit(
+			"failed test 'test_for_each_word_from_file' -- ref mismatch (expected; %d, actual; %llu)",
+			reference_ref,
+			ref);
+	}
+
+	if (strlen((char *) reference_word) != len
+		|| 0 != memcmp(s, reference_word, len)) {
+			deen_log_error_and_exit(
+				"failed test 'test_for_each_word_from_file' -- word mismatch (expected; %s)",
+				(char *) reference_word);
+	}
+
+	return DEEN_TRUE; // keep processing.
+}
+
+
+/*
+This test works by reading in the input file and processing it to produce a list
+of words.  The words are then compared to another file which is read in order to
+get a "known correct output".  If the comparison goes OK then the test has been
+successful.
+*/
+
+static void test_for_each_word_from_file() {
+	int fd = open("core-test/input_for_each_word_from_file_a.txt", O_RDONLY);
+
+	if (-1 == fd) {
+		deen_log_error_and_exit("failed test 'test_for_each_word_from_file' -- unable to open test data");
+	}
+
+	FILE *reference_file = fopen("core-test/output_for_each_word_from_file_a.txt", "r");
+
+	if (NULL == reference_file) {
+		deen_log_error_and_exit("failed test 'test_for_each_word_from_file' -- unable to open reference data");
+	}
+
+	deen_for_each_word_from_file(
+		4, // crazy small to better check the buffer handling
+		fd,
+		// &test_for_each_word_from_file_reference_callback,
+		&test_for_each_word_from_file_check_callback,
+		(void *) reference_file);
+
+	close(fd);
+	fclose(reference_file);
+
+	DEEN_LOG_INFO0("passed test 'test_for_each_word_from_file'");
+}
+
+
+// ---------------------------------------------------------------
+// DRIVING THE TESTS
+// ---------------------------------------------------------------
+
 
 int main(int argc, char** argv) {
 
@@ -156,6 +267,7 @@ int main(int argc, char** argv) {
 	test_utf8_sequences_count__incomplete_sequence();
 	test_utf8_sequence_len__accented();
 	test_utf8_sequence_len__non_accented();
+	test_for_each_word_from_file();
 
 	return 0;
 }

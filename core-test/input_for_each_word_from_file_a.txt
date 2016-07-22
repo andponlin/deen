@@ -1,0 +1,8 @@
+This is   some  sample text and may not be [grammatically]]] or actually correct.
+   ...at all.
+
+
+Now we'll use some accented characters such as is seen in "daß" and
+"Käsebrötchen".
+
+Note the lack of a trailing newline or punctuation

@@ -5,11 +5,19 @@
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
- 
+
 #ifndef __CONSTANTS_H
 #define __CONSTANTS_H
 
 #include <stdint.h>
+
+/*
+Used to define a buffer size that would be sensible when handling large
+buffers of text to be tokenized into words.
+*/
+
+// 10k
+#define DEEN_BUFFER_SIZE_EACH_WORD_FROM_FILE (1024 * 10)
 
 /*
 This set of constants define the prefix used to log at different levels.

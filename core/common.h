@@ -80,6 +80,7 @@ each time that a word is encountered.  The function should return
 */
 
 deen_bool deen_for_each_word_from_file(
+	size_t read_buffer_size,
 	int fd,
 	deen_bool (*process_callback)(
 		const uint8_t *s,

@@ -17,8 +17,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-// 10k
-#define BUFFER_SIZE_EACH_WORD_FROM_FILE (1024 * 10)
 
 #define ISWORDCHAR(C) (!isspace(C) && !ispunct(C))
 
@@ -455,6 +453,7 @@ deen_utf8_sequence_result deen_utf8_sequence_len(
 
 
 deen_bool deen_for_each_word_from_file(
+	size_t read_buffer_size,
 	int fd,
 	deen_bool (*process_callback)(
 		const uint8_t *s,
@@ -466,8 +465,8 @@ deen_bool deen_for_each_word_from_file(
 
 	deen_bool result = DEEN_TRUE;
 
-	uint8_t *c_buffer = (uint8_t *) deen_emalloc(sizeof(unsigned char) * BUFFER_SIZE_EACH_WORD_FROM_FILE);
-	size_t c_buffer_len = BUFFER_SIZE_EACH_WORD_FROM_FILE;
+	uint8_t *c_buffer = (uint8_t *) deen_emalloc(sizeof(unsigned char) * read_buffer_size);
+	size_t c_buffer_len = read_buffer_size;
 	size_t c_buffer_loadedlen = 0;
 
 	// find out the length of the file.
@@ -591,7 +590,7 @@ deen_bool deen_for_each_word_from_file(
 
 			if (result) {
 				if (0 == c_buffer_word_end) {
-					c_buffer_len += sizeof(unsigned char) * BUFFER_SIZE_EACH_WORD_FROM_FILE;
+					c_buffer_len += sizeof(unsigned char) * read_buffer_size;
 					c_buffer = (uint8_t *) deen_erealloc(c_buffer, c_buffer_len);
 					DEEN_LOG_ERROR1("requiring a larger buffer for reading words from file; %u bytes", c_buffer_len);
 				}

@@ -591,6 +591,7 @@ uint8_t deen_install_from_path(
 		time_t secs_before = deen_seconds_since_epoc();
 
 		if (!deen_for_each_word_from_file(
+			DEEN_BUFFER_SIZE_EACH_WORD_FROM_FILE,
 			fd_data,
 			&deen_index_callback,
 			&index_context)) {
