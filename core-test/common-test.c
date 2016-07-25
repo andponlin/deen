@@ -149,7 +149,7 @@ static void test_utf8_sequence_len__non_accented() {
 }
 
 // ---------------------------------------------------------------
-// FOR EACH WORD
+// FOR EACH WORD FROM FILE
 // ---------------------------------------------------------------
 
 /*
@@ -253,6 +253,65 @@ static void test_for_each_word_from_file() {
 
 
 // ---------------------------------------------------------------
+// FOR EACH WORD FROM MEMORY
+// ---------------------------------------------------------------
+
+
+static uint8_t *test_for_each_word_expected(size_t offset) {
+	switch(offset) {
+		case 0: return (uint8_t *) "Es";
+		case 1: return (uint8_t *) "ist";
+		case 2: return (uint8_t *) "mir";
+		case 3: return (uint8_t *) "k\xc3\x84se";
+		default:
+			deen_log_error_and_exit("failed test 'test_for_each_word' -- word out of range");
+	}
+
+	return NULL;
+}
+
+
+static deen_bool test_for_each_word_check_callback(
+	const uint8_t *s,
+	size_t offset,
+	size_t len,
+	void *context) {
+
+	size_t *word_offset = (size_t *) context;
+	uint8_t *word = test_for_each_word_expected(*word_offset);
+	size_t word_len = strlen((char *) word);
+
+	if (
+		word_len != len
+		|| 0 != memcmp(&s[offset],word,sizeof(uint8_t) * len)) {
+		deen_log_error_and_exit("failed test 'test_for_each_word' -- at %s", word);
+	}
+
+	word_offset[0]++;
+
+	return DEEN_TRUE;
+}
+
+
+/*
+Tests that words can be found in a string.
+*/
+
+
+static void test_for_each_word() {
+	uint8_t *sample = (uint8_t *) "  Es ist mir k\xc3\x84se";
+	size_t upto = 0;
+
+	deen_for_each_word(
+		sample,
+		0,
+		&test_for_each_word_check_callback,
+		&upto);
+
+	DEEN_LOG_INFO0("passed test 'test_for_each_word'");
+}
+
+// ---------------------------------------------------------------
 // DRIVING THE TESTS
 // ---------------------------------------------------------------
 
@@ -268,6 +327,7 @@ int main(int argc, char** argv) {
 	test_utf8_sequence_len__accented();
 	test_utf8_sequence_len__non_accented();
 	test_for_each_word_from_file();
+	test_for_each_word();
 
 	return 0;
 }
