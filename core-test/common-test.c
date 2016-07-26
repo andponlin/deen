@@ -322,7 +322,7 @@ static void test_to_upper() {
 	memcpy(buffer, sample, sizeof(uint8_t) * (len + 1));
 
 	// - - - - - - - - - -
-	deen_to_upper(buffer);
+	deen_to_upper((uint8_t *) buffer);
 	// - - - - - - - - - -
 
 	if (0 != memcmp(buffer, expected, sizeof(uint8_t) * len)) {
@@ -330,6 +330,60 @@ static void test_to_upper() {
 	}
 
 	DEEN_LOG_INFO0("passed test 'test_to_upper'");
+}
+
+
+static void test_imatches_at__positive() {
+	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
+	uint8_t *part = (uint8_t *) "L\xc3\xb6t";
+
+	// - - - - - - - - - -
+	if(DEEN_TRUE != deen_imatches_at(sample, part, 1)) {
+		deen_log_error_and_exit("failed test 'test_imatches_at__positive'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_imatches_at__positive'");
+}
+
+static void test_imatches_at__negative() {
+	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
+	uint8_t *part = (uint8_t *) "L\xc3\xb6t";
+
+	// - - - - - - - - - -
+	if(DEEN_FALSE != deen_imatches_at(sample, part, 2)) {
+		deen_log_error_and_exit("failed test 'test_imatches_at__negative'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_imatches_at__negative'");
+}
+
+
+static void test_ifind_first__positive() {
+	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
+	uint8_t *part = (uint8_t *) "\xc3\xb6";
+
+	// - - - - - - - - - -
+	if(2 != deen_ifind_first(sample, part, 1,7)) {
+		deen_log_error_and_exit("failed test 'test_ifind_first__positive'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_ifind_first__positive'");
+}
+
+static void test_ifind_first__negative() {
+	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
+	uint8_t *part = (uint8_t *) "\xc3\xb6";
+
+	// - - - - - - - - - -
+	if(DEEN_NOT_FOUND != deen_ifind_first(sample, part, 3,7)) {
+		deen_log_error_and_exit("failed test 'test_ifind_first__negative'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_ifind_first__negative'");
 }
 
 // ---------------------------------------------------------------
@@ -350,6 +404,10 @@ int main(int argc, char** argv) {
 	test_for_each_word_from_file();
 	test_for_each_word();
 	test_to_upper();
+	test_imatches_at__positive();
+	test_imatches_at__negative();
+	test_ifind_first__positive();
+	test_ifind_first__negative();
 
 	return 0;
 }

@@ -119,7 +119,8 @@ deen_bool deen_imatches_at(const uint8_t *s, const uint8_t *f, size_t at);
 /*
 Find the offset into the string 's' at which the string 'f' can be found.  The
 search is performed between the offsets 'from' -> 'to'.  The search is case
-insensitive.
+insensitive.  This function will return DEEN_NOT_FOUND if nothing was able to
+be found.
 */
 
 size_t deen_ifind_first(const uint8_t *s, const uint8_t *f, size_t from, size_t to);
