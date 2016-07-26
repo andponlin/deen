@@ -373,6 +373,7 @@ static void test_ifind_first__positive() {
 	DEEN_LOG_INFO0("passed test 'test_ifind_first__positive'");
 }
 
+
 static void test_ifind_first__negative() {
 	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
 	uint8_t *part = (uint8_t *) "\xc3\xb6";
@@ -385,6 +386,33 @@ static void test_ifind_first__negative() {
 
 	DEEN_LOG_INFO0("passed test 'test_ifind_first__negative'");
 }
+
+
+static void test_is_common_upper_word__positive() {
+	uint8_t *sample = (uint8_t *) "DAS";
+
+	// - - - - - - - - - -
+	if (DEEN_FALSE == deen_is_common_upper_word(sample, 3)) {
+		deen_log_error_and_exit("failed test 'test_is_common_upper_word__positive'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_is_common_upper_word__positive'");
+}
+
+
+static void test_is_common_upper_word__negative() {
+	uint8_t *sample = (uint8_t *) "ZOO";
+
+	// - - - - - - - - - -
+	if (DEEN_TRUE == deen_is_common_upper_word(sample, 3)) {
+		deen_log_error_and_exit("failed test 'test_is_common_upper_word__negative'");
+	}
+	// - - - - - - - - - -
+
+	DEEN_LOG_INFO0("passed test 'test_is_common_upper_word__negative'");
+}
+
 
 // ---------------------------------------------------------------
 // DRIVING THE TESTS
@@ -408,6 +436,8 @@ int main(int argc, char** argv) {
 	test_imatches_at__negative();
 	test_ifind_first__positive();
 	test_ifind_first__negative();
+	test_is_common_upper_word__positive();
+	test_is_common_upper_word__negative();
 
 	return 0;
 }
