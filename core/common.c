@@ -648,30 +648,6 @@ void deen_for_each_word(
 }
 
 
-deen_first_keyword deen_ifind_first_keyword(
-	const uint8_t *s,
-	deen_keywords *keywords,
-	size_t from, size_t to) {
-
-	deen_first_keyword result;
-	result.keyword = NULL;
-	result.offset = DEEN_NOT_FOUND;
-
-	for (int i=0;i<keywords->count;i++) {
-		size_t keyword_i = deen_ifind_first(s, keywords->keywords[i], from, to);
-
-		if (DEEN_NOT_FOUND != keyword_i) {
-			if (DEEN_NOT_FOUND == result.offset || keyword_i < result.offset) {
-				result.offset = keyword_i;
-				result.keyword = keywords->keywords[i];
-			}
-		}
-	}
-
-	return result;
-}
-
-
 // ---------------------------------------------------------------
 // ENSURED MEMORY ALLOCATION
 // ---------------------------------------------------------------

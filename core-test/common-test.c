@@ -312,6 +312,27 @@ static void test_for_each_word() {
 }
 
 // ---------------------------------------------------------------
+
+static void test_to_upper() {
+	uint8_t *sample = (uint8_t *) "pL\xc3\xb6tzLich";
+	uint8_t *expected = (uint8_t *) "PL\xc3\x96TZLICH";
+	size_t len = strlen((char *) sample);
+	uint8_t *buffer[128];
+
+	memcpy(buffer, sample, sizeof(uint8_t) * (len + 1));
+
+	// - - - - - - - - - -
+	deen_to_upper(buffer);
+	// - - - - - - - - - -
+
+	if (0 != memcmp(buffer, expected, sizeof(uint8_t) * len)) {
+		deen_log_error_and_exit("failed test 'test_to_upper'");
+	}
+
+	DEEN_LOG_INFO0("passed test 'test_to_upper'");
+}
+
+// ---------------------------------------------------------------
 // DRIVING THE TESTS
 // ---------------------------------------------------------------
 
@@ -328,6 +349,7 @@ int main(int argc, char** argv) {
 	test_utf8_sequence_len__non_accented();
 	test_for_each_word_from_file();
 	test_for_each_word();
+	test_to_upper();
 
 	return 0;
 }

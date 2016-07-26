@@ -7,6 +7,7 @@
  */
 
 #include "core/constants.h"
+#include "core/keyword.h"
 
 #include "renderplain.h"
 #include "rendercommon.h"
@@ -94,7 +95,7 @@ static void deen_render_plain_text_highlights(
 				if(is_valid_keyword_found) {
 					fputs(TTYRED, stdout);
 				}
-				
+
 				deen_term_print_str_range(
 					text,
 					first_keyword.offset,

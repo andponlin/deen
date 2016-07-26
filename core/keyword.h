@@ -47,6 +47,12 @@ tweaked so that searches work.
 
 deen_bool deen_keywords_adjust(deen_keywords *keywords);
 
+/*
+Out of the list of supplied keywords, find the first one in the source text.
+*/
+
+deen_first_keyword deen_ifind_first_keyword(const uint8_t *s, deen_keywords *keywords, size_t from, size_t to);
+
 // ---------------------------------------------------------------
 
 
