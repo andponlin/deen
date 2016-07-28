@@ -36,8 +36,11 @@ void deen_entry_yy_push_sub(deen_entry_yy_extra *extra) {
 
 
 void deen_entry_yy_push_sub_sub(deen_entry_yy_extra *extra) {
-    DEEN_LOG_TRACE0(" +sub_sub");
-	deen_entry_sub *sub = &(extra->subs[extra->sub_count-1]);
+	deen_entry_sub *sub;
+
+	DEEN_LOG_TRACE0(" +sub_sub");
+
+	sub = &(extra->subs[extra->sub_count-1]);
 
 	if(0==sub->sub_sub_count) {
 		sub->sub_subs = (deen_entry_sub_sub *) deen_emalloc(sizeof(deen_entry_sub_sub));
@@ -56,10 +59,14 @@ void deen_entry_yy_push_sub_sub(deen_entry_yy_extra *extra) {
 
 
 void deen_entry_yy_push_atom(deen_entry_yy_extra *extra, enum deen_entry_atom_type type, char *text, size_t len) {
-    DEEN_LOG_TRACE2("  +atom; %d : >%s<", type, text);
+	deen_entry_sub *sub;
+	deen_entry_sub_sub *sub_sub;
+	deen_entry_atom *new_atom;
 
-	deen_entry_sub *sub = &(extra->subs[extra->sub_count-1]);
-	deen_entry_sub_sub *sub_sub = &(sub->sub_subs[sub->sub_sub_count-1]);
+	DEEN_LOG_TRACE2("  +atom; %d : >%s<", type, text);
+
+	sub = &(extra->subs[extra->sub_count-1]);
+	sub_sub = &(sub->sub_subs[sub->sub_sub_count-1]);
 
 	if(0==sub_sub->atom_count) {
 		sub_sub->atoms = (deen_entry_atom *) deen_emalloc(sizeof(deen_entry_atom));
@@ -72,7 +79,7 @@ void deen_entry_yy_push_atom(deen_entry_yy_extra *extra, enum deen_entry_atom_ty
 	}
 
 	sub_sub->atom_count++;
-	deen_entry_atom *new_atom = &(sub_sub->atoms[sub_sub->atom_count-1]);
+	new_atom = &(sub_sub->atoms[sub_sub->atom_count-1]);
 
 	new_atom->type = type;
 	new_atom->text = NULL;
@@ -118,21 +125,21 @@ void deen_entry_create_yy(
 	deen_entry_sub **subs,
 	uint32_t *sub_count) {
 
-    deen_entry_yy_extra extra;
-    extra.subs = NULL;
+	yyscan_t scanner;
+	deen_entry_yy_extra extra;
+
+	extra.subs = NULL;
 	extra.sub_count = 0;
 
-    yyscan_t scanner;
+	deen_entry_yy_push_sub(&extra);
+	deen_entry_yy_push_sub_sub(&extra);
 
-    deen_entry_yy_push_sub(&extra);
-    deen_entry_yy_push_sub_sub(&extra);
+	yylex_init_extra(&extra, &scanner);
+	yy_scan_string((char *) data, scanner);
 
-    yylex_init_extra(&extra, &scanner);
-    yy_scan_string((char *) data, scanner);
+	yylex(scanner);
 
-    yylex(scanner);
-
-    yylex_destroy(scanner);
+	yylex_destroy(scanner);
 
 	// copy the data back
 	*subs = extra.subs;

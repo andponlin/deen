@@ -80,6 +80,7 @@ static void deen_render_plain_text_highlights(
 				upto = len;
 			}
 			else {
+				deen_bool is_valid_keyword_found;
 				size_t keyword_len = strlen((char *) first_keyword.keyword);
 				deen_term_print_str_range(text, upto, first_keyword.offset);
 
@@ -87,7 +88,7 @@ static void deen_render_plain_text_highlights(
 				// the prefix of a word and is not finding text 'randomly'
 				// within the line.
 
-				deen_bool is_valid_keyword_found =
+				is_valid_keyword_found =
 					0 == first_keyword.offset ||
 					isspace(text[first_keyword.offset-1]) ||
 					ispunct(text[first_keyword.offset-1]);
@@ -146,7 +147,9 @@ void deen_render_plain_entry_sub_sub(
 	deen_bool tty) {
 
 	if (NULL!=sub_sub) {
-		for (uint32_t i=0;i<sub_sub->atom_count;i++) {
+		uint32_t i;
+
+		for (i=0;i<sub_sub->atom_count;i++) {
 			if (0!=i) {
 				fputs(" ", stdout);
 			}
@@ -163,13 +166,15 @@ void deen_render_plain_entry_sub(
 	deen_bool tty) {
 
     if (NULL!=sub) {
-		for (uint32_t i=0;i<sub->sub_sub_count;i++) {
-			if (0!=i) {
-				fputs("; ", stdout);
-			}
+	uint32_t i;
 
-			deen_render_plain_entry_sub_sub(&(sub->sub_subs[i]), keywords, tty);
+	for (i=0;i<sub->sub_sub_count;i++) {
+		if (0!=i) {
+			fputs("; ", stdout);
 		}
+
+		deen_render_plain_entry_sub_sub(&(sub->sub_subs[i]), keywords, tty);
+	}
     }
 }
 
@@ -178,13 +183,14 @@ void deen_render_plain_entry(
 	deen_keywords *keywords,
 	deen_bool tty) {
 
+	uint32_t i;
 	uint32_t max_count = entry->german_sub_count;
 
 	if (entry->english_sub_count > max_count) {
 		max_count = entry->english_sub_count;
 	}
 
-	for (uint32_t i=0;i<max_count;i++) {
+	for (i=0;i<max_count;i++) {
 		if (1==max_count) {
 			fputs("    ", stdout);
 		}
@@ -228,9 +234,10 @@ void deen_render_plain_entry(
 void deen_render_rule(deen_bool tty) {
 	if (deen_term_is_utf8() && tty) {
 
+		int i;
 		deen_render_tty_or_nontty(tty, TTYFADED, NULL);
 
-		for (int i=0;i<32;i++) {
+		for (i=0;i<32;i++) {
 			fputs((char *) UTF8_RULE, stdout);
 		}
 
@@ -250,13 +257,14 @@ void deen_render_plain(deen_search_result *result, deen_keywords *keywords) {
 			puts("not found\n");
 		}
 		else {
+			uint32_t i;
 			deen_bool tty = isatty(fileno(stdout));
 
 			deen_render_tty_or_nontty(tty, TTYFADED, NULL);
 			printf("showing %d of %d - best match last\n", result->entry_count, result->total_count);
 			deen_render_tty_or_nontty(tty, TTYSEQRESET, NULL);
 
-			uint32_t i = result->entry_count;
+			i = result->entry_count;
 
 			do {
 				i--;

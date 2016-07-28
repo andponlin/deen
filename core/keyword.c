@@ -66,7 +66,9 @@ deen_keywords *deen_keywords_create() {
 }
 
 void deen_keywords_free(deen_keywords *keywords) {
-	for (uint32_t i=0;i<keywords->count;i++) {
+	uint32_t i;
+
+	for (i=0;i<keywords->count;i++) {
 		free((void *) keywords->keywords[i]);
 	}
 
@@ -85,8 +87,9 @@ static deen_bool deen_keywords_has_prefix(
 	deen_keywords *keywords,
 	const uint8_t *prefix,
 	size_t prefix_len) {
+	uint32_t i;
 
-	for (uint32_t i=0;i<keywords->count;i++) {
+	for (i=0;i<keywords->count;i++) {
 		if (0 == memcmp(keywords->keywords[i], prefix, prefix_len)) {
 	    	return DEEN_TRUE;
 		}
@@ -147,8 +150,9 @@ void deen_keywords_add_from_string(deen_keywords *keywords, const uint8_t *input
 
 size_t deen_keywords_longest_keyword(deen_keywords *keywords) {
 	size_t longest = 0;
+	uint32_t i;
 
-	for (uint32_t i=0;i<keywords->count;i++) {
+	for (i=0;i<keywords->count;i++) {
 		size_t len = strlen((const char *) keywords->keywords[i]);
 
 		if (len > longest) {
@@ -202,13 +206,15 @@ static deen_bool deen_keywords_one_present(const uint8_t *keyword, const uint8_t
 
 
 deen_bool deen_keywords_all_present(deen_keywords *keywords, const uint8_t *input) {
-    for (uint32_t i=0;i < keywords->count; i++) {
+	uint32_t i;
+
+	for (i=0;i < keywords->count; i++) {
 		if (DEEN_FALSE == deen_keywords_one_present(keywords->keywords[i], input)) {
 		    return DEEN_FALSE;
 		}
-    }
+	}
 
-    return DEEN_TRUE;
+	return DEEN_TRUE;
 }
 
 
@@ -264,8 +270,9 @@ static deen_bool deen_keywords_substitute_german_usascii_abbreviations(uint8_t *
 
 deen_bool deen_keywords_adjust(deen_keywords *keywords) {
 	deen_bool adjusted = DEEN_FALSE;
+	uint32_t i;
 
-	for (uint32_t i=0;i < keywords->count; i++) {
+	for (i=0;i < keywords->count; i++) {
 		adjusted = adjusted | deen_keywords_substitute_german_usascii_abbreviations(keywords->keywords[i]);
     }
 
@@ -278,11 +285,13 @@ deen_first_keyword deen_ifind_first_keyword(
 	deen_keywords *keywords,
 	size_t from, size_t to) {
 
+	size_t i;
 	deen_first_keyword result;
+
 	result.keyword = NULL;
 	result.offset = DEEN_NOT_FOUND;
 
-	for (int i=0;i<keywords->count;i++) {
+	for (i=0;i<keywords->count;i++) {
 		size_t keyword_i = deen_ifind_first(s, keywords->keywords[i], from, to);
 
 		if (DEEN_NOT_FOUND != keyword_i) {

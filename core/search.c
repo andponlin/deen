@@ -130,6 +130,7 @@ static deen_search_result *deen_search_refs_to_result(
 	off_t *refs,
 	size_t refs_length) {
 
+	size_t i;
 	deen_bool is_error = DEEN_FALSE;
 	uint8_t *buffer = (uint8_t *) deen_emalloc(sizeof(uint8_t) * SIZE_BUFFER_LINE_DEFAULT);
 	size_t buffer_size = SIZE_BUFFER_LINE_DEFAULT;
@@ -139,7 +140,10 @@ static deen_search_result *deen_search_refs_to_result(
 	result->total_count = 0;
 	result->entry_count = 0;
 
-	for (size_t i=0;!is_error && i<refs_length;i++) {
+	for (i=0;!is_error && i<refs_length;i++) {
+
+		ssize_t bufferread_size;
+		uint8_t *newline_c;
 
 	// move to the point in the file where the line starts.
 
@@ -150,13 +154,14 @@ static deen_search_result *deen_search_refs_to_result(
 
 	// now read the line containing the data.
 
-		ssize_t bufferread_size = 0;
-		uint8_t *newline_c = NULL;
+		bufferread_size = 0;
+		newline_c = NULL;
 
 	// read in a line of data; this should fairly quickly right-size the
 	// buffer and therefore will be fairly optimal.
 
 		do {
+			ssize_t actuallyread;
 
 	// if the buffer is too small then resize it to make it
 	// larger.
@@ -166,7 +171,7 @@ static deen_search_result *deen_search_refs_to_result(
 				buffer = (uint8_t *) deen_erealloc(buffer, buffer_size);
 			}
 
-			ssize_t actuallyread = read(context->fd_data,&buffer[bufferread_size],(buffer_size-bufferread_size));
+			actuallyread = read(context->fd_data,&buffer[bufferread_size],(buffer_size-bufferread_size));
 
 			switch (actuallyread) {
 				case 0:
@@ -190,13 +195,14 @@ static deen_search_result *deen_search_refs_to_result(
 	// wish to process comments.
 
 		if (!is_error && 0 != buffer[0] && '#' != buffer[0]) {
+		    uint8_t *separator_c;
 
 			newline_c[0] = 0;
 
 	// need to make sure that all of the keywords are able to be found
 	// in the line.
 
-		    uint8_t *separator_c = (uint8_t *) strstr((const char *)buffer,"::");
+		    separator_c = (uint8_t *) strstr((const char *)buffer,"::");
 
 		    if (NULL==separator_c) {
 			    DEEN_LOG_ERROR1("corrupted line missing '::' separator at offset %d",(int) refs[i]);
@@ -297,11 +303,12 @@ static int deen_search_sort_callback(const void *a, const void *b) {
 
 static void deen_search_sort(deen_search_result *search_result, deen_keywords *keywords) {
 	if (search_result->entry_count > 0) {
+		uint32_t i;
 
 		// allocated once to avoid continuously allocating memory.
 		deen_bool *keyword_use_map = (deen_bool *) deen_emalloc(sizeof(deen_bool) * keywords->count);
 
-		for (uint32_t i=0;i<search_result->entry_count;i++) {
+		for (i=0;i<search_result->entry_count;i++) {
 			search_result->entries[i].distance_from_keywords = deen_entry_calculate_distance_from_keywords(
 				&(search_result->entries[i]), keywords, keyword_use_map);
 		}
@@ -316,8 +323,9 @@ static void deen_search_sort(deen_search_result *search_result, deen_keywords *k
 
 static void deen_search_crop(deen_search_result *search_result, size_t max_result_count) {
 	if (max_result_count < search_result->entry_count) {
+		uint32_t i;
 
-		for (uint32_t i=max_result_count;i<search_result->entry_count;i++) {
+		for (i=max_result_count;i<search_result->entry_count;i++) {
 			deen_entry_free(&search_result->entries[i]);
 		}
 
@@ -340,8 +348,12 @@ deen_search_result *deen_search(
 
 	off_t *refs_combined = NULL;
 	size_t refs_combined_length = 0;
+	size_t i;
 
-	for (uint32_t i=0;i<keywords->count;i++) {
+	deen_search_result *search_result;
+
+	for (i=0;i<keywords->count;i++) {
+		deen_index_lookup_result *lookup_result;
 
 		// copy the keyword into a buffer and then cut it off
 		// to make the prefix to search on.
@@ -358,7 +370,7 @@ deen_search_result *deen_search(
 // intersection of all of the refs for all of the keywords
 // supplied.
 
-		deen_index_lookup_result *lookup_result = deen_index_lookup(
+		lookup_result = deen_index_lookup(
 			context->db,
 			keyword_prefix_buffer);
 
@@ -390,11 +402,11 @@ deen_search_result *deen_search(
 	// is loaded, all of the supplied keywords can be found on
 	// that line.
 
-	for (int i=0;i<refs_combined_length;i++) {
+	for (i=0;i<refs_combined_length;i++) {
 		DEEN_LOG_TRACE1("ref; %d", (int) refs_combined[i]);
 	}
 
-	deen_search_result *search_result = deen_search_refs_to_result(
+	search_result = deen_search_refs_to_result(
 		context, keywords,
 		refs_combined,
 		refs_combined_length);
@@ -407,7 +419,9 @@ deen_search_result *deen_search(
 
 void deen_search_result_free(deen_search_result *result) {
 	if (NULL != result) {
-		for (uint32_t i=0;i<result->entry_count;i++) {
+		uint32_t i;
+
+		for (i=0;i<result->entry_count;i++) {
 			deen_entry_free(&(result->entries[i]));
 		}
 

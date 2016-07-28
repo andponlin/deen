@@ -6,8 +6,8 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#import "core/types.h"
-#import "core/common.h"
+#include "core/types.h"
+#include "core/common.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -227,12 +227,13 @@ successful.
 
 static void test_for_each_word_from_file() {
 	int fd = open("core-test/input_for_each_word_from_file_a.txt", O_RDONLY);
+	FILE *reference_file;
 
 	if (-1 == fd) {
 		deen_log_error_and_exit("failed test 'test_for_each_word_from_file' -- unable to open test data");
 	}
 
-	FILE *reference_file = fopen("core-test/output_for_each_word_from_file_a.txt", "r");
+	reference_file = fopen("core-test/output_for_each_word_from_file_a.txt", "r");
 
 	if (NULL == reference_file) {
 		deen_log_error_and_exit("failed test 'test_for_each_word_from_file' -- unable to open reference data");

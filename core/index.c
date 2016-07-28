@@ -72,7 +72,9 @@ void deen_index_add_context_free(deen_index_add_context *context) {
 		}
 
 		if (0 != context->find_existing_prefixes_stmts_count) {
-			for (int i=0; i<context->find_existing_prefixes_stmts_count; i++) {
+			int i;
+
+			for (i=0; i<context->find_existing_prefixes_stmts_count; i++) {
 				if (NULL != context->find_existing_prefixes_stmts[i]) {
 					if (SQLITE_OK != sqlite3_finalize(context->find_existing_prefixes_stmts[i])) {
 						deen_log_error_and_exit("sqllite error finalizing find existing prefixes stmt; %s", sqlite3_errmsg(context->db));
@@ -84,7 +86,9 @@ void deen_index_add_context_free(deen_index_add_context *context) {
 		}
 
 		if (0 != context->ref_insert_stmts_count) {
-			for (int i=0; i<context->ref_insert_stmts_count; i++) {
+			int i;
+
+			for (i=0; i<context->ref_insert_stmts_count; i++) {
 				if (NULL != context->ref_insert_stmts[i]) {
 					if (SQLITE_OK != sqlite3_finalize(context->ref_insert_stmts[i])) {
 						deen_log_error_and_exit("sqllite error finalizing find existing prefixes stmt; %s", sqlite3_errmsg(context->db));
@@ -107,13 +111,15 @@ static sqlite3_stmt *deen_index_get_or_create_find_existing_prefixes_stmt(
 	}
 
 	if (prefix_count >= index_add_context->find_existing_prefixes_stmts_count) {
+		size_t i;
+
 		index_add_context->find_existing_prefixes_stmts = deen_erealloc(
 			index_add_context->find_existing_prefixes_stmts,
 			sizeof(sqlite3_stmt *) * prefix_count
 		);
 
 		for (
-			size_t i=index_add_context->find_existing_prefixes_stmts_count;
+			i=index_add_context->find_existing_prefixes_stmts_count;
 			i < prefix_count;
 			i++) {
 			index_add_context->find_existing_prefixes_stmts[i] = NULL;
@@ -121,12 +127,13 @@ static sqlite3_stmt *deen_index_get_or_create_find_existing_prefixes_stmt(
 	}
 
 	if(NULL == index_add_context->find_existing_prefixes_stmts[prefix_count - 1]) {
+		uint32_t i;
 		size_t len = strlen(SQL_PREFIX_BULK_FETCH) + (size_t) (3 + ((prefix_count-1) * 2));
 		char *sql = deen_emalloc(len + 1); // +1 for the NULL at the end
 		strcpy(sql, SQL_PREFIX_BULK_FETCH);
 		strcat(sql, "(");
 
-		for (uint32_t i = 0; i < prefix_count; i++) {
+		for (i = 0; i < prefix_count; i++) {
 			if (0 != i) {
 				strcat(sql, ",");
 			}
@@ -160,13 +167,15 @@ static sqlite3_stmt *deen_index_get_or_create_ref_insert_stmt(
 	}
 
 	if (tuple_count >= index_add_context->ref_insert_stmts_count) {
+		size_t i;
+
 		index_add_context->ref_insert_stmts = deen_erealloc(
 			index_add_context->ref_insert_stmts,
 			sizeof(sqlite3_stmt *) * tuple_count
 		);
 
 		for (
-			size_t i=index_add_context->ref_insert_stmts_count;
+			i=index_add_context->ref_insert_stmts_count;
 			i < tuple_count;
 			i++) {
 			index_add_context->ref_insert_stmts[i] = NULL;
@@ -174,11 +183,12 @@ static sqlite3_stmt *deen_index_get_or_create_ref_insert_stmt(
 	}
 
 	if(NULL == index_add_context->ref_insert_stmts[tuple_count - 1]) {
+		uint32_t i;
 		size_t len = strlen(SQL_PREFIX_REF_INSERT) + (size_t) (tuple_count * 6);
 		char *sql = deen_emalloc(len + 1); // +1 for the NULL at the end
 		strcpy(sql, SQL_PREFIX_REF_INSERT);
 
-		for (uint32_t i = 0; i < tuple_count; i++) {
+		for (i = 0; i < tuple_count; i++) {
 			if (0 != i) {
 				strcat(sql, ",");
 			}
@@ -212,9 +222,11 @@ static void deen_index_find_existing_prefixes(
 	uint32_t prefix_count,
 	uint32_t *prefix_ids) {
 
+	uint32_t i;
 	sqlite3_stmt *stmt = deen_index_get_or_create_find_existing_prefixes_stmt(index_add_context, prefix_count);
+	deen_bool processed_all_rows;
 
-	for (uint32_t i = 0; i < prefix_count; i++) {
+	for (i = 0; i < prefix_count; i++) {
 		if (SQLITE_OK != sqlite3_bind_text(
 			stmt,
 			i + 1, // first parameter is at index 1
@@ -226,17 +238,18 @@ static void deen_index_find_existing_prefixes(
 		}
 	}
 
-	deen_bool processed_all_rows = DEEN_FALSE;
+	processed_all_rows = DEEN_FALSE;
 
 	while (!processed_all_rows) {
 		switch (sqlite3_step(stmt)) {
 
 			case SQLITE_ROW:
 			{
+				uint32_t j;
 				off_t row_id = (off_t) sqlite3_column_int64(stmt, 0);
 				const unsigned char *row_prefix = sqlite3_column_text(stmt, 1);
 
-				for (uint32_t j=0;j<prefix_count;j++) {
+				for (j=0;j<prefix_count;j++) {
 					if (0 == strcmp((const char *) prefixes[j], (const char *) row_prefix)) {
 						prefix_ids[j] = row_id;
 					}
@@ -273,8 +286,12 @@ static void deen_index_add_missing_prefixes(
 	uint32_t prefix_count,
 	uint32_t *prefix_ids) {
 
-	for (uint32_t i = 0;i < prefix_count; i++) {
+	uint32_t i;
+
+	for (i = 0;i < prefix_count; i++) {
 		if (0==prefix_ids[i]) {
+			
+			uint32_t j;
 
 			if (NULL == index_add_context->prefix_insert_stmt) {
 				if (SQLITE_OK != sqlite3_prepare_v2(
@@ -310,7 +327,7 @@ static void deen_index_add_missing_prefixes(
 			// then swap those in as well in order to avoid trying another
 			// insert which will fail because the column must be unique.
 
-			for (uint32_t j = i;j < prefix_count; j++) {
+			for (j = i;j < prefix_count; j++) {
 				if (0 == strcmp((const char *) prefixes[i], (const char *) prefixes[j])) {
 					prefix_ids[j] = prefix_ids[i];
 				}
@@ -327,11 +344,13 @@ static void deen_index_add_refs(
 	uint32_t *prefix_ids,
 	uint32_t prefix_count) {
 
+	uint32_t i;
+
 	sqlite3_stmt *stmt = deen_index_get_or_create_ref_insert_stmt(
 		index_add_context,
 		prefix_count);
 
-	for (uint32_t i = 0;i<prefix_count;i++) {
+	for (i = 0;i<prefix_count;i++) {
 
 		if (SQLITE_OK != sqlite3_bind_int(stmt, 1 + (2 * i), prefix_ids[i])) {
 			deen_log_error_and_exit("sqllite error binding into statement for add indexes; %s", sqlite3_errmsg(index_add_context->db));
@@ -359,12 +378,14 @@ void deen_index_add(
 	uint8_t **prefixes,
 	uint32_t prefix_count) {
 
+	uint32_t *prefix_ids;
+
 	if (0==prefix_count) {
 		DEEN_LOG_INFO0("requested zero indexes added");
 		return;
 	}
 
-	uint32_t *prefix_ids = deen_emalloc(prefix_count * sizeof(uint32_t));
+	prefix_ids = deen_emalloc(prefix_count * sizeof(uint32_t));
 	bzero(prefix_ids, sizeof(uint32_t) * prefix_count);
 
 #ifdef DEBUG
@@ -401,12 +422,15 @@ deen_index_lookup_result *deen_index_lookup(
 	sqlite3 *db,
 	uint8_t *prefix) {
 
+	deen_bool processed_all_rows;
+	sqlite3_stmt *stmt;
 	uint32_t allocted_refs_count = 10;
 	deen_index_lookup_result *result = (deen_index_lookup_result *) deen_emalloc(sizeof(deen_index_lookup_result));
+
 	result->refs = (off_t *) deen_emalloc(sizeof(off_t) * allocted_refs_count);
 	result->refs_count = 0;
 
-	sqlite3_stmt *stmt = NULL;
+	stmt = NULL;
 
 	if (SQLITE_OK != sqlite3_prepare_v2(db, SQL_REF_LOOKUP, -1, &stmt, NULL)) {
 		deen_log_error_and_exit("sqllite error preparing statement for [%s]; %s", SQL_REF_LOOKUP, sqlite3_errmsg(db));
@@ -416,7 +440,7 @@ deen_index_lookup_result *deen_index_lookup(
 		deen_log_error_and_exit("sqllite error setting parameter in [%s]; %s", SQL_REF_LOOKUP, sqlite3_errmsg(db));
 	}
 
-	deen_bool processed_all_rows = DEEN_FALSE;
+	processed_all_rows = DEEN_FALSE;
 
 	while (!processed_all_rows) {
 		switch (sqlite3_step(stmt)) {

@@ -253,8 +253,9 @@ size_t deen_ifind_first(const uint8_t *s, const uint8_t *f, size_t from, size_t 
 
 void deen_to_upper(uint8_t *s) {
 	size_t len = strlen((const char *)s);
+	size_t i;
 
-	for (int i=0;i<len;i++) {
+	for (i=0;i<len;i++) {
 		if (0xc3 == s[i]) {
 			i++;
 
@@ -380,10 +381,11 @@ deen_utf8_sequence_result deen_utf8_sequences_count(
 	const uint8_t *c,
 	size_t c_length,
 	size_t *sequence_count) {
+	size_t i;
 
 	sequence_count[0] = 0;
 
-	for (size_t i = 0; i < c_length;) {
+	for (i = 0; i < c_length;) {
 
 		size_t sequence_length;
 		deen_utf8_sequence_result sequence_result = deen_utf8_sequence_len(
@@ -410,6 +412,7 @@ deen_utf8_sequence_result deen_utf8_sequence_len(
 	size_t c_length,
 	size_t *sequence_length) {
 
+	size_t i;
 	sequence_length[0] = 0;
 
 	if (0==c_length) {
@@ -442,7 +445,7 @@ deen_utf8_sequence_result deen_utf8_sequence_len(
 		return DEEN_INCOMPLETE_SEQUENCE;
 	}
 
-	for (uint32_t i = 1; i < sequence_length[0]; i++) {
+	for (i = 1; i < sequence_length[0]; i++) {
 		if (0x80 != (c[i] & 0xc0)) {
 			return DEEN_BAD_SEQUENCE;
 		}
@@ -494,17 +497,22 @@ deen_bool deen_for_each_word_from_file(
 			result &&
 			((file_lastread = read(fd, &c_buffer[c_buffer_loadedlen], c_buffer_len-c_buffer_loadedlen)) > 0) )
 		{
+			float progress;
+                        deen_bool need_more_data;
+                        uint32_t c_buffer_word_start;
+                        uint32_t c_buffer_word_end; 
+
 			DEEN_LOG_TRACE1("did read %u additional bytes", file_lastread);
 
 			file_read += file_lastread;
-			float progress = (float) file_read / (float) file_len;
+			progress = (float) file_read / (float) file_len;
 			c_buffer_loadedlen += (size_t) file_lastread;
 
 			// find the next non-whitespace.
 
-			deen_bool need_more_data = DEEN_FALSE;
-			uint32_t c_buffer_word_start = 0;
-			uint32_t c_buffer_word_end = 0;
+			need_more_data = DEEN_FALSE;
+			c_buffer_word_start = 0;
+			c_buffer_word_end = 0;
 
 			while (!need_more_data && result) {
 
@@ -624,13 +632,14 @@ void deen_for_each_word(
 	size_t len = strlen((char *) &s[offset]);
 
 	while (offset < len) {
+		size_t end;
 
 		// skip whitespace
 		while (offset < len && (isspace(s[offset]) || ispunct(s[offset]))) {
 			offset++;
 		}
 
-		int end = offset;
+		end = offset;
 
 		while (end < len && !isspace(s[end]) && !ispunct(s[end])) {
 			end++;

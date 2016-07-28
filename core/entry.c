@@ -60,7 +60,9 @@ static void deen_entry_atom_free(deen_entry_atom *atom) {
 
 static void deen_entry_sub_sub_free(deen_entry_sub_sub *sub_sub) {
 	if (NULL != sub_sub) {
-		for (uint32_t i=0;i<sub_sub->atom_count;i++) {
+		uint32_t i;
+
+		for (i=0;i<sub_sub->atom_count;i++) {
 			deen_entry_atom_free(&(sub_sub->atoms[i]));
 		}
 
@@ -71,7 +73,9 @@ static void deen_entry_sub_sub_free(deen_entry_sub_sub *sub_sub) {
 
 static void deen_entry_sub_free(deen_entry_sub *sub) {
 	if (NULL!=sub) {
-		for (uint32_t i=0;i<sub->sub_sub_count;i++) {
+		uint32_t i;
+
+		for (i=0;i<sub->sub_sub_count;i++) {
 			deen_entry_sub_sub_free(&(sub->sub_subs[i]));
 		}
 
@@ -82,11 +86,13 @@ static void deen_entry_sub_free(deen_entry_sub *sub) {
 
 void deen_entry_free(deen_entry *entry) {
 	if (NULL!=entry) {
-		for (uint32_t i=0;i<entry->english_sub_count;i++) {
+		uint32_t i;
+
+		for (i=0;i<entry->english_sub_count;i++) {
 			deen_entry_sub_free(&(entry->english_subs[i]));
 		}
 
-		for (uint32_t i=0;i<entry->german_sub_count;i++) {
+		for (i=0;i<entry->german_sub_count;i++) {
 			deen_entry_sub_free(&(entry->german_subs[i]));
 		}
 	}
@@ -113,8 +119,9 @@ size_t deen_entry_find_first_keyword(
 	const uint8_t *s,
 	deen_keywords *keywords,
 	uint32_t offset) {
+	uint32_t i;
 
-	for (uint32_t i=0;i<keywords->count;i++) {
+	for (i=0;i<keywords->count;i++) {
 		if (deen_imatches_at(s, keywords->keywords[i], offset)) {
 			return i;
 		}
@@ -138,11 +145,13 @@ deen_bool deen_entry_calculate_distance_from_keywords_foreachword_callback(
 		state->accumulated_distance_from_keyword += (uint32_t) len;
 	}
 	else {
+		size_t keyword_len;
+		size_t sequence_count;
+
 		state->keyword_use_map[keyword_offset] = DEEN_TRUE;
 
 		// how many letters (decoded from UTF-8) remain in the rest of the word?
-		size_t keyword_len = strlen((char *) state->keywords->keywords[keyword_offset]);
-		size_t sequence_count;
+		keyword_len = strlen((char *) state->keywords->keywords[keyword_offset]);
 
 		switch (deen_utf8_sequences_count(&s[offset + keyword_len], len-keyword_len, &sequence_count)) {
 
@@ -175,15 +184,17 @@ static uint32_t deen_entry_sub_sub_calculate_distance_from_keywords(
 	deen_entry_sub_sub *sub_sub,
 	deen_keywords *keywords,
 	deen_bool *keyword_use_map) {
+	
+	deen_entry_calculate_distance_from_keywords_foreachword_callback_state state;
+	uint32_t i;
 
 	bzero(keyword_use_map, (sizeof(deen_bool) * keywords->count));
 
-	deen_entry_calculate_distance_from_keywords_foreachword_callback_state state;
 	state.keywords = keywords;
 	state.keyword_use_map = keyword_use_map;
 	state.accumulated_distance_from_keyword = 0;
 
-	for (uint32_t i=0;i<sub_sub->atom_count;i++) {
+	for (i=0;i<sub_sub->atom_count;i++) {
 
 		if (ATOM_TEXT == sub_sub->atoms[i].type) {
 
@@ -194,7 +205,7 @@ static uint32_t deen_entry_sub_sub_calculate_distance_from_keywords(
 		}
 	}
 
-	for (uint32_t i=0;i<keywords->count;i++) {
+	for (i=0;i<keywords->count;i++) {
 		if (!keyword_use_map[i]) {
 			return DEEN_MAX_SORT_DISTANCE_FROM_KEYWORDS;
 		}
@@ -209,9 +220,10 @@ static uint32_t deen_entry_sub_calculate_distance_from_keywords(
 	deen_keywords *keywords,
 	deen_bool *keyword_use_map) {
 
+	uint32_t i;
 	int result = DEEN_MAX_SORT_DISTANCE_FROM_KEYWORDS;
 
-	for (uint32_t i=0;i<sub->sub_sub_count;i++) {
+	for (i=0;i<sub->sub_sub_count;i++) {
 		uint32_t sub_sub_result = deen_entry_sub_sub_calculate_distance_from_keywords(
 			&sub->sub_subs[i], keywords, keyword_use_map);
 
@@ -231,8 +243,9 @@ static uint32_t deen_entry_subs_calculate_distance_from_keywords(
 	deen_bool *keyword_use_map) {
 
 	uint32_t result = DEEN_MAX_SORT_DISTANCE_FROM_KEYWORDS;
+	uint32_t i;
 
-	for (uint32_t i=0;i < sub_count;i++) {
+	for (i=0;i < sub_count;i++) {
 
 		uint32_t sub_result = deen_entry_sub_calculate_distance_from_keywords(
 			&subs[i],

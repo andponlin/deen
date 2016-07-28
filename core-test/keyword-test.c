@@ -6,9 +6,9 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#import "core/types.h"
-#import "core/common.h"
-#import "core/keyword.h"
+#include "core/types.h"
+#include "core/common.h"
+#include "core/keyword.h"
 
 #include <string.h>
 
@@ -49,6 +49,7 @@ static void test_keywords_longest_keyword() {
 
 
 static void test_keywords_adjust() {
+	uint8_t *keyword;
 	deen_keywords *keywords = deen_keywords_create();
 	deen_keywords_add_from_string(keywords, (uint8_t *) "KOENIG");
 
@@ -56,7 +57,7 @@ static void test_keywords_adjust() {
 	deen_keywords_adjust(keywords);
 	// - - - - - - - - - -
 
-	uint8_t *keyword = keywords->keywords[0];
+	keyword = keywords->keywords[0];
 
 	if(0 != memcmp(keyword, "K\xC3\x96NIG", 6)) {
 		deen_log_error_and_exit("failed test 'test_keywords_adjust'");

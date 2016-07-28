@@ -48,7 +48,9 @@ static void deen_cli_syntax() {
 }
 
 static void deen_cli_capture_args(deen_cli_args *args, int argc, char** argv) {
-	for (int i = 1; i < argc; i++) {
+	int i;
+
+	for (i = 1; i < argc; i++) {
 		if ('-' == argv[i][0]) {
 
 			if (2 != strlen(argv[i])) {
@@ -216,6 +218,8 @@ static void deen_cli_trace_keywords(deen_keywords *keywords) {
 
 static void deen_cli_query(deen_cli_args *args) {
 
+	deen_search_result *result;
+	deen_search_context *context;
 	char *deen_root_dir = deen_cli_root_dir();
 	deen_keywords *keywords = deen_keywords_create();
 	size_t search_expression_len = strlen((char *) args->search_expression);
@@ -238,13 +242,13 @@ static void deen_cli_query(deen_cli_args *args) {
 
 	// run the search
 
-	deen_search_context *context = deen_search_init(deen_root_dir);
+	context = deen_search_init(deen_root_dir);
 
 	if(NULL==context) {
 		deen_log_error_and_exit("unable to create a search context");
 	}
 
-	deen_search_result *result = deen_search(context, keywords, args->result_count);
+	result = deen_search(context, keywords, args->result_count);
 
 	if(0 == result->total_count) {
 		if(deen_keywords_adjust(keywords)) {
@@ -267,6 +271,7 @@ static void deen_cli_query(deen_cli_args *args) {
 
 
 int main(int argc, char** argv) {
+	deen_cli_args args;
 
 	if (1 == argc) {
 		deen_cli_syntax();
@@ -274,7 +279,6 @@ int main(int argc, char** argv) {
 
 	// capture the argument inputs from the user.
 
-	deen_cli_args args;
 	deen_cli_init_args(&args);
 	deen_cli_capture_args(&args, argc, argv);
 	deen_cli_validate_args(&args);

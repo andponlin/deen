@@ -18,14 +18,19 @@
 static deen_bool deen_term_is_utf8_langenv(char *lang_value) {
 	if (NULL!=lang_value) {
 		int len = strlen(lang_value);
-		return len > 6 && 0 == strcmp(&lang_value[len-6], ".UTF-8");
+		return len > 6 && (
+			0 == strcmp(&lang_value[len-5], ".utf8") ||
+			0 == strcmp(&lang_value[len-6], ".UTF-8")
+		);
 	}
 
 	return DEEN_FALSE;
 }
 
 deen_bool deen_term_is_utf8() {
-	return deen_term_is_utf8_langenv(getenv("LANG"));
+	return
+		deen_term_is_utf8_langenv(getenv("LANG")) ||
+		deen_term_is_utf8_langenv(getenv("LC_CTYPE"));
 }
 
 
@@ -35,7 +40,9 @@ void deen_term_print_str(uint8_t *str) {
 
 
 static void deen_term_print_ascii_str(uint8_t *str, size_t from, size_t to) {
-	for (size_t i = from; i<to; i++) {
+	size_t i;
+
+	for (i = from; i<to; i++) {
 		fputc((int) str[i], stdout);
 	}
 }
@@ -50,9 +57,10 @@ void deen_term_print_str_range(uint8_t *str, size_t from, size_t to) {
 			deen_term_print_ascii_str(str, from, to);
 		}
 		else {
+			size_t i;
 			size_t len = to-from;
 
-			for (size_t i=from;i<to;) {
+			for (i=from;i<to;) {
 				size_t sequence_length;
 
 				switch (deen_utf8_sequence_len(&str[i], len - i, &sequence_length)) {

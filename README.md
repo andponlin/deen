@@ -32,6 +32,15 @@ Debian packages as prerequisites;
 
 Install the Apple developers' tools.
 
+### Haiku-OS
+
+You will need to install sqlite3;
+
+```
+pkgman install sqlite_x86_devel
+pkgman install sqlite_devel
+```
+
 ### Installation
 
 There is presently no _installation_ target so just use the resultant binary directly.

@@ -14,7 +14,6 @@
 
 #include <ctype.h>
 #include <stdarg.h>
-#include <stdint.h>
 
 #include <sys/time.h>
 

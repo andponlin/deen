@@ -246,8 +246,9 @@ static deen_bool deen_remove_fileobject(const char *filename) {
 
 static deen_bool deen_remove_fileobject_in_root_dir(const char *deen_root_dir, const char *leafname) {
 	char *buffer = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(leafname) + 2);
+	uint8_t result;
 	sprintf(buffer,"%s/%s", deen_root_dir, leafname);
-	uint8_t result = deen_remove_fileobject(buffer);
+	result = deen_remove_fileobject(buffer);
 	return result;
 }
 
@@ -357,11 +358,12 @@ output this data.
 static void deen_index_flush_context_prefixes_to_index_trace_log(deen_index_context *context) {
 
 	if (deen_is_trace_enabled()) {
+		size_t i;
 
 		fputs(DEEN_PREFIX_TRACE,stdout);
 		fprintf(stdout, " %8lld <-- { ", (unsigned long long) context->current_ref);
 
-		for (size_t i = 0; i < context->prefix_count; i++) {
+		for (i = 0; i < context->prefix_count; i++) {
 			if (0!=i) {
 				fputs(", ",stdout);
 			}
@@ -481,6 +483,8 @@ uint8_t deen_install_from_path(
 	const char *ding_filename,
 	deen_install_progress_cb progress_cb) {
 
+	int fd_data;
+	sqlite3 *db = NULL;
 	deen_bool is_error = DEEN_FALSE;
 	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
 	char *index_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_INDEX) + 2);
@@ -505,9 +509,11 @@ uint8_t deen_install_from_path(
 			DEEN_INSTALL_RAISE_ERROR
 		}
 		else {
+			int fd_dest_data;
+
 			DEEN_LOG_INFO1("source opened for copy to install location; %s",ding_filename);
 
-			int fd_dest_data = open(
+			fd_dest_data = open(
 			    data_path,
 				O_RDWR|O_CREAT|O_TRUNC,
 				S_IRUSR|S_IRGRP|S_IROTH);
@@ -517,13 +523,15 @@ uint8_t deen_install_from_path(
 				DEEN_INSTALL_RAISE_ERROR
 			}
 			else {
+				void *buffer;
+				ssize_t bytes_read;
+
 				DEEN_LOG_INFO1("destination opened for copy to install location; %s",data_path);
 
-				void *buffer = (void *) deen_emalloc(DEEN_SIZE_FILE_COPY_BUFFER);
-				ssize_t bytesRead;
+				buffer = (void *) deen_emalloc(DEEN_SIZE_FILE_COPY_BUFFER);
 
-				while (!is_error && (bytesRead = read(fd_src_data,buffer,DEEN_SIZE_FILE_COPY_BUFFER)) > 0) {
-					if (write(fd_dest_data,buffer,bytesRead) < bytesRead) {
+				while (!is_error && (bytes_read = read(fd_src_data,buffer,DEEN_SIZE_FILE_COPY_BUFFER)) > 0) {
+					if (write(fd_dest_data, buffer, bytes_read) < bytes_read) {
 						DEEN_LOG_ERROR2("unable to copy the data from %s --> %s", ding_filename, data_path);
 						DEEN_INSTALL_RAISE_ERROR
 					}
@@ -541,7 +549,6 @@ uint8_t deen_install_from_path(
 	}
 
 	// create the target sqllite database.
-	sqlite3 *db = NULL;
 
 	if (!is_error && !deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
 		if (SQLITE_OK != sqlite3_open_v2(
@@ -559,7 +566,7 @@ uint8_t deen_install_from_path(
 		DEEN_LOG_TRACE0("did initialize the index database");
 	}
 
-	int fd_data = -1;
+	fd_data = -1;
 
 	if (!is_error && !deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
 		fd_data = open(data_path, O_RDONLY);
@@ -574,6 +581,7 @@ uint8_t deen_install_from_path(
 	}
 
 	if (!is_error) {
+		time_t secs_before;
 		deen_index_context index_context;
 
 		index_context.cancel_mutex = cancel_mutex;
@@ -588,7 +596,7 @@ uint8_t deen_install_from_path(
 		index_context.prefix_count_allocated = 0;
 		index_context.prefixes = NULL;
 
-		time_t secs_before = deen_seconds_since_epoc();
+		secs_before = deen_seconds_since_epoc();
 
 		if (!deen_for_each_word_from_file(
 			DEEN_BUFFER_SIZE_EACH_WORD_FROM_FILE,
@@ -627,7 +635,9 @@ uint8_t deen_install_from_path(
 		}
 
 		if (NULL != index_context.prefixes) {
-			for (size_t i=0;i<index_context.prefix_count_allocated;i++) {
+			size_t i;
+
+			for (i=0;i<index_context.prefix_count_allocated;i++) {
 				free((void *) index_context.prefixes[i]);
 			}
 
