@@ -27,6 +27,7 @@ Debian packages as prerequisites;
 
 * ```sqlite3```
 * ```libsqlite3-dev```
+* ```flex```
 
 ### macOS
 
