@@ -62,6 +62,7 @@ static int deen_keywords_compare_length(const void *k1, const void *k2) {
 deen_keywords *deen_keywords_create() {
 	deen_keywords *keywords = (deen_keywords *) deen_emalloc(sizeof(deen_keywords));
 	keywords->count = 0;
+	keywords->keywords = NULL;
 	return keywords;
 }
 
@@ -72,7 +73,10 @@ void deen_keywords_free(deen_keywords *keywords) {
 		free((void *) keywords->keywords[i]);
 	}
 
-	free((void *) keywords->keywords);
+	if (NULL != keywords->keywords) {
+		free((void *) keywords->keywords);
+	}
+
 	free((void *) keywords);
 }
 
