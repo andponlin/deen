@@ -44,6 +44,7 @@ LDFLAGSOTHER=-lsqlite3
 
 TESTKEYWORDOBJS=core-test/keyword-test.o
 TESTCOMMONOBJS=core-test/common-test.o
+TESTINDEXOBJS=core-test/index-test.o
 
 all: deen
 
@@ -53,15 +54,19 @@ deen: $(CLILIBS) $(COREOBJS) $(CLIOBJS)
 # ----------------------------------
 # TESTS
 
-tests: deen-keyword-test deen-common-test
+tests: deen-keyword-test deen-common-test deen-index-test
 	./deen-keyword-test
 	./deen-common-test
+	./deen-index-test
 
 deen-keyword-test: $(COREOBJS) $(TESTKEYWORDOBJS)
 	$(CC) $(TESTKEYWORDOBJS) $(COREOBJS) -o deen-keyword-test $(LDFLAGS) $(LDFLAGSOTHER)
 
 deen-common-test: $(COREOBJS) $(TESTCOMMONOBJS)
 	$(CC) $(TESTCOMMONOBJS) $(COREOBJS) -o deen-common-test $(LDFLAGS) $(LDFLAGSOTHER)
+
+deen-index-test: $(COREOBJS) $(TESTINDEXOBJS)
+	$(CC) $(TESTINDEXOBJS) $(COREOBJS) -o deen-index-test $(LDFLAGS) $(LDFLAGSOTHER)
 
 # ----------------------------------
 
