@@ -15,6 +15,12 @@ deen_entry deen_entry_create(const uint8_t *german, const uint8_t *english);
 
 void deen_entry_free(deen_entry *entry);
 
+/*
+ The 'keyword_use_map' parameter here is a buffer that can be re-used between
+ invocations.  The output of this buffer is not meaningful.  This just avoids
+ needing to continuously re-allocate and free the memory for this buffer.
+ */
+
 int deen_entry_calculate_distance_from_keywords(
 	deen_entry *entry,
 	deen_keywords *keywords,

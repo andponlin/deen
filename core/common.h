@@ -184,6 +184,7 @@ deen_bool deen_is_trace_enabled();
 #define DEEN_LOG_ERROR0(FMT) deen_log(DEEN_PREFIX_ERROR,__FILE__,__LINE__,FMT)
 #define DEEN_LOG_ERROR1(FMT,ARG1) deen_log(DEEN_PREFIX_ERROR,__FILE__,__LINE__,FMT,ARG1)
 #define DEEN_LOG_ERROR2(FMT,ARG1,ARG2) deen_log(DEEN_PREFIX_ERROR,__FILE__,__LINE__,FMT,ARG1,ARG2)
+#define DEEN_LOG_ERROR3(FMT,ARG1,ARG2,ARG3) deen_log(DEEN_PREFIX_ERROR,__FILE__,__LINE__,FMT,ARG1,ARG2,ARG3)
 
 void deen_log_info(const char *fmt, ...);
 void deen_log_error(const char *fmt, ...);

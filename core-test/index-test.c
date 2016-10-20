@@ -23,13 +23,13 @@ results come out.
 #define OUTPUT_DATABASE_FILE "tmp_index_e2e.sqlite"
 
 static void test_index_e2e_setup(sqlite3 *db) {
-	DEEN_LOG_INFO0("...will init database...");
+	DEEN_LOG_TRACE0("will init database...");
 	deen_index_init(db);
 
-	DEEN_LOG_INFO0("...will create add context...");
+	DEEN_LOG_TRACE0("will create add context...");
 	deen_index_add_context *add_context = deen_index_add_context_create(db);
 
-	DEEN_LOG_INFO0("...add to index...");
+	DEEN_LOG_TRACE0("add to index...");
 	{
 		uint8_t *prefixes[3] = {
 			(uint8_t *) "ERT",
@@ -60,7 +60,7 @@ static void test_index_e2e_setup(sqlite3 *db) {
 		deen_index_add(add_context, 789, prefixes, 3);
 	}
 
-	DEEN_LOG_INFO0("...close add context...");
+	DEEN_LOG_TRACE0("close add context...");
 	deen_index_add_context_free(add_context);
 }
 
@@ -76,7 +76,7 @@ static deen_bool test_index_e2e_find_ref(deen_index_lookup_result *result, off_t
 
 static deen_bool test_index_e2e_lookup(sqlite3 *db) {
 
-	DEEN_LOG_INFO0("...perform lookup...");
+	DEEN_LOG_TRACE0("perform lookup...");
 	deen_index_lookup_result *lookup_result = deen_index_lookup(db, (uint8_t *) "RAT");
 	deen_bool result = DEEN_TRUE;
 
@@ -94,7 +94,7 @@ static deen_bool test_index_e2e_lookup(sqlite3 *db) {
 		result = DEEN_FALSE;
 	}
 
-	DEEN_LOG_INFO0("...free results...");
+	DEEN_LOG_TRACE0("free results...");
 	deen_index_lookup_result_free(lookup_result);
 
 	return result;
@@ -111,9 +111,9 @@ static deen_bool test_index_e2e_lookup(sqlite3 *db) {
 	 sqlite3 *db = NULL;
 	deen_bool result = DEEN_TRUE;
 
-	 DEEN_LOG_INFO0("running test 'test_index_e2e'");
+	 DEEN_LOG_TRACE0("running test 'test_index_e2e'");
 
-	 DEEN_LOG_INFO0("...will open database...");
+	 DEEN_LOG_TRACE0("will open database...");
 	 if (SQLITE_OK != sqlite3_open_v2(
 		 OUTPUT_DATABASE_FILE, &db,
 		 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
@@ -129,10 +129,10 @@ static deen_bool test_index_e2e_lookup(sqlite3 *db) {
 	 result = result && test_index_e2e_lookup(db);
 
 	 if(NULL != db) {
-		DEEN_LOG_INFO0("...will close database...");
+		DEEN_LOG_TRACE0("will close database...");
 		sqlite3_close_v2(db);
 
-		DEEN_LOG_INFO0("...will remove database file...");
+		DEEN_LOG_TRACE0("will remove database file...");
 		if (0 != remove(OUTPUT_DATABASE_FILE)) {
 			result = DEEN_FALSE;
 			DEEN_LOG_ERROR0("unable to delete the temporary database file.");
