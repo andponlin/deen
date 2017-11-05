@@ -15,19 +15,21 @@ Please see the LICENSE.TXT file for the license that governs the use of this sof
 This software is designed to be built and run in a UN*X-like environment.  To build this software requires;
 
 * C-Compiler
-* Make
-* SQL-Lite Version 3
-* Flex
+* ```make``` build tool
+* ```flex``` parser generator tool
+* ```wget``` file-download tool
+* ```unzip``` decompression tool
+* Internet connection to download ```sqlite3``` library
 
 To build the software run the ```make``` command at the top level.  This will fairly quickly produce a ```deen``` executable.  If you want to get a debug build use ```make DEBUG=1```.
 
+### Windows
+
+Deen will build on the MinGW environment.  You will need to ensure that the prerequisite tools listed above are installed using the MinGW installation tool.
+
 ### Debian
 
-Debian packages as prerequisites;
-
-* ```sqlite3```
-* ```libsqlite3-dev```
-* ```flex```
+TODO
 
 ### macOS
 
@@ -35,16 +37,11 @@ Install the Apple developers' tools.
 
 ### Haiku-OS
 
-You will need to install sqlite3;
-
-```
-pkgman install sqlite_x86_devel
-pkgman install sqlite_devel
-```
+TODO
 
 ### Installation
 
-There is presently no _installation_ target so just use the resultant binary directly.
+There is presently no _installation_ target so just use the resultant binary directly.  This is either ```deen``` or ```deen.exe``` on Windows.
 
 ### Release
 
@@ -57,11 +54,11 @@ make
 
 ## Data
 
-The data used with Deen comes from a project known as [Ding](https://www-user.tu-chemnitz.de/~fri/ding/).  You will need to download Ding's data to use Deen.  At the time of writing this data can be found [here](http://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en/de-en.txt.gz).  You will need to decompress the Ding data before use.
+The data used with Deen comes from a project known as [Ding](https://www-user.tu-chemnitz.de/~fri/ding/).  You will need to download Ding's data to use Deen.  At the time of writing this data can be found [here](http://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en/de-en.txt.gz).  You will need to decompress the Ding data before use.  By default, Deen will install the data into a ```.deen``` directory in the user's home directory.  To specify another location where Deen should store its data, configure an environment variable ```DEENDATAHOME```.
 
 ### Removal
 
-The Deen application will tend to install a copy of the Ding data and its own index at ```~/.deen```.  If you no longer want to use Deen then you should delete this directory as well.
+If you no longer want to use Deen then you should delete this directory as well as the Deen binary.  See the "Data" section for information on the location of this directory.
 
 ## Command Line Tool Usage
 

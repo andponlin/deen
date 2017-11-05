@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef __MINGW32__
 static deen_bool deen_term_is_utf8_langenv(char *lang_value) {
 	if (NULL!=lang_value) {
 		int len = strlen(lang_value);
@@ -26,11 +27,16 @@ static deen_bool deen_term_is_utf8_langenv(char *lang_value) {
 
 	return DEEN_FALSE;
 }
+#endif
 
 deen_bool deen_term_is_utf8() {
+#ifdef __MINGW32__
+	return DEEN_TRUE; // this is forced by console setup.
+#else
 	return
 		deen_term_is_utf8_langenv(getenv("LANG")) ||
 		deen_term_is_utf8_langenv(getenv("LC_CTYPE"));
+#endif
 }
 
 

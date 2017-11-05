@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -188,7 +188,7 @@ static uint32_t deen_entry_sub_sub_calculate_distance_from_keywords(
 	deen_entry_calculate_distance_from_keywords_foreachword_callback_state state;
 	uint32_t i;
 
-	bzero(keyword_use_map, (sizeof(deen_bool) * keywords->count));
+	memset(keyword_use_map, 0, (sizeof(deen_bool) * keywords->count));
 
 	state.keywords = keywords;
 	state.keyword_use_map = keyword_use_map;

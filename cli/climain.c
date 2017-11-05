@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -17,10 +17,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <pwd.h>
 #include <stdlib.h>
 
 #include <sys/types.h>
+
+#ifndef __MINGW32__
+#include <pwd.h>
+#endif
+
 
 typedef struct deen_cli_args deen_cli_args;
 
@@ -153,9 +157,25 @@ static deen_bool deen_cli_install_progress_cb(enum deen_install_state state, flo
  */
 
 static char *deen_cli_root_dir() {
-	struct passwd *pw = getpwuid(getuid());
-	char *deen_root_dir = (char *) deen_emalloc(strlen(pw->pw_dir) + 2 + strlen(DIR_DEEN));
-	sprintf(deen_root_dir, "%s/%s", pw->pw_dir, DIR_DEEN);
+	char *deen_root_dir = NULL;
+	char *deen_home = getenv("DEENDATAHOME");
+
+	if (NULL != deen_home && 0 != strlen(deen_home)) {
+		deen_root_dir = (char *) deen_emalloc(strlen(deen_home) + 1);
+		strcpy(deen_root_dir, deen_home);
+	} else {
+		char *home_dir;	
+
+#ifdef __MINGW32__
+		home_dir = getenv("USERPROFILE");
+#else
+		struct passwd *pw = getpwuid(getuid());
+		home_dir = pw->pw_dir;
+#endif
+		deen_root_dir = (char *) deen_emalloc(strlen(home_dir) + 2 + strlen(DIR_DEEN));
+		sprintf(deen_root_dir, "%s%s%s", home_dir, DEEN_FILE_SEP, DIR_DEEN);
+	}
+
 	return deen_root_dir;
 }
 
@@ -165,7 +185,9 @@ static void deen_cli_index(const char *filename) {
 	char *deen_root_dir = deen_cli_root_dir();
 
 	deen_install_from_path(
+#ifndef __MINGW32__
 		NULL, // mutex lock for cancelling
+#endif
 		&cancel,
 		deen_root_dir,
 		filename,

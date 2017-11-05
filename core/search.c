@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -19,10 +19,17 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#ifdef __MINGW32__
+#include <io.h>
+#endif
+
+#include <sys/types.h>
+
+
 #define SIZE_BUFFER_LINE_DEFAULT 196
 
 void deen_search_free(deen_search_context *context) {
-    if (-1 != context->fd_data) {
+	if (-1 != context->fd_data) {
 		close(context->fd_data);
 	}
 
@@ -42,14 +49,22 @@ deen_search_context *deen_search_init(char *deen_root_dir) {
 	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
 	char *index_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_INDEX) + 2);
 
-	sprintf(data_path, "%s/%s", deen_root_dir, DEEN_LEAF_DING_DATA);
-	sprintf(index_path, "%s/%s", deen_root_dir, DEEN_LEAF_INDEX);
+	sprintf(data_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_DING_DATA);
+	sprintf(index_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_INDEX);
 
-	context->fd_data = open(data_path, O_RDONLY);
+	context->fd_data = open(data_path, O_RDONLY
+#ifdef __MINGW32__
+		|O_BINARY
+#endif
+	);
 
 	if (-1 == context->fd_data) {
 		is_error = DEEN_TRUE;
 		DEEN_LOG_ERROR1("unable to open data file; %s", data_path);
+	} else {
+#ifdef DEBUG
+		DEEN_LOG_INFO1("opened data file; %s", data_path);
+#endif
 	}
 
 	if (SQLITE_OK != sqlite3_open_v2(index_path, &(context->db), SQLITE_OPEN_READONLY, NULL)) {
@@ -89,7 +104,7 @@ static int deen_compare_refs(const void *item1, const void *item2) {
  */
 
 static int deen_search_intersect_refs(
-    off_t *refs_combined,
+	off_t *refs_combined,
 	off_t *refs,
 	size_t refs_combined_length,
 	size_t refs_length) {
@@ -97,12 +112,12 @@ static int deen_search_intersect_refs(
 	size_t i;
 
 	for (i=0;i<refs_combined_length;) {
-	    if (NULL == bsearch(
-		    &refs_combined[i], // what to find
-		    refs,
-		    refs_length,
-		    sizeof(off_t),
-		    &deen_compare_refs)) {
+		if (NULL == bsearch(
+			&refs_combined[i], // what to find
+			refs,
+			refs_length,
+			sizeof(off_t),
+			&deen_compare_refs)) {
 			if (i<refs_combined_length-1)
 				memmove(
 					&refs_combined[i],
@@ -147,7 +162,7 @@ static deen_search_result *deen_search_refs_to_result(
 
 	// move to the point in the file where the line starts.
 
-		if (-1 == lseek(context->fd_data, (off_t) refs[i], SEEK_SET)) {
+		if (-1 == lseek(context->fd_data, refs[i], SEEK_SET)) {
 			DEEN_LOG_ERROR1("unable to seek in data to; %d", (int) refs[i]);
 			is_error = DEEN_TRUE;
 		}
@@ -171,7 +186,7 @@ static deen_search_result *deen_search_refs_to_result(
 				buffer = (uint8_t *) deen_erealloc(buffer, buffer_size);
 			}
 
-			actuallyread = read(context->fd_data,&buffer[bufferread_size],(buffer_size-bufferread_size));
+			actuallyread = read(context->fd_data, &buffer[bufferread_size], (buffer_size-bufferread_size));
 
 			switch (actuallyread) {
 				case 0:
@@ -195,19 +210,24 @@ static deen_search_result *deen_search_refs_to_result(
 	// wish to process comments.
 
 		if (!is_error && 0 != buffer[0] && '#' != buffer[0]) {
-		    uint8_t *separator_c;
+			uint8_t *separator_c;
 
 			newline_c[0] = 0;
 
 	// need to make sure that all of the keywords are able to be found
 	// in the line.
 
-		    separator_c = (uint8_t *) strstr((const char *)buffer,"::");
+			separator_c = (uint8_t *) strstr((const char *)buffer, "::");
 
-		    if (NULL==separator_c) {
-			    DEEN_LOG_ERROR1("corrupted line missing '::' separator at offset %d",(int) refs[i]);
-		    }
-		    else {
+			if (NULL == separator_c) {
+#ifdef DEBUG
+				DEEN_LOG_ERROR2("corrupted line missing '::' separator at offset %d \"%s\n",
+				(int) refs[i], buffer);
+#else
+				DEEN_LOG_ERROR1("corrupted line missing '::' separator at offset %d",(int) refs[i]);
+#endif
+			}
+			else {
 
 				uint8_t *german_c = buffer;
 				uint8_t *english_c = &separator_c[2];
@@ -273,12 +293,12 @@ static deen_search_result *deen_search_refs_to_result(
 		}
 	}
 
-    if (is_error) {
+	if (is_error) {
 		deen_search_result_free(result);
 		return NULL;
-    }
+	}
 
-    return result;
+	return result;
 }
 
 
@@ -426,5 +446,5 @@ void deen_search_result_free(deen_search_result *result) {
 		}
 
 		free((void *) result);
-    }
+	}
 }

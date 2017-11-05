@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -16,6 +16,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#ifdef __MINGW32__
+#include <windows.h>
+#define WIN_ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#define WIN_CODE_PAGE_UTF8 65001
+#endif
 
 /*
 These character sequences code for various colors in the ANSI terminal.
@@ -258,7 +264,27 @@ void deen_render_plain(deen_search_result *result, deen_keywords *keywords) {
 		}
 		else {
 			uint32_t i;
-			deen_bool tty = isatty(fileno(stdout));
+			deen_bool tty;
+#ifdef __MINGW32__
+			HANDLE win_h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+			DWORD win_old_console_mode;
+			deen_bool win_has_console_mode = DEEN_TRUE;
+			UINT win_console_output_cp;
+
+			if (!GetConsoleMode(win_h_stdout, &win_old_console_mode)) {
+				DEEN_LOG_ERROR0("unable to get the windows console mode");
+				win_has_console_mode = DEEN_FALSE;
+			} else {
+				SetConsoleMode(win_h_stdout,
+					win_old_console_mode | WIN_ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+			}
+
+			win_console_output_cp = GetConsoleOutputCP();
+			SetConsoleOutputCP(WIN_CODE_PAGE_UTF8);
+			tty = DEEN_TRUE;
+#else
+			tty = isatty(fileno(stdout));
+#endif
 
 			deen_render_tty_or_nontty(tty, TTYFADED, NULL);
 			printf("showing %d of %d - best match last\n", result->entry_count, result->total_count);
@@ -272,6 +298,14 @@ void deen_render_plain(deen_search_result *result, deen_keywords *keywords) {
 				deen_render_plain_entry(&result->entries[i], keywords, tty);
 			}
 			while(i > 0);
+
+#ifdef __MINGW32__
+			if (win_has_console_mode) {
+				SetConsoleMode(win_h_stdout, win_old_console_mode);
+			}
+			SetConsoleOutputCP(win_console_output_cp);
+#endif
+
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -11,7 +11,9 @@
 
 #include "common.h"
 
+#ifndef __MINGW32__
 #include <pthread.h>
+#endif
 
 enum deen_install_check_ding_format_check_result {
     DEEN_INSTALL_CHECK_OK,
@@ -45,7 +47,9 @@ enum deen_install_check_ding_format_check_result deen_install_check_for_ding_for
 typedef deen_bool (*deen_install_progress_cb)(enum deen_install_state state, float progress);
 
 deen_bool deen_install_from_path(
+#ifndef __MINGW32__
 	pthread_mutex_t *cancel_mutex,
+#endif
 	uint8_t *cancel, // boolean
 	const char *deen_root_dir,
 	const char *filename,

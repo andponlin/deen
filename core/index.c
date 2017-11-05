@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -56,7 +56,7 @@ void deen_index_init(sqlite3 *db) {
 
 deen_index_add_context *deen_index_add_context_create(sqlite3 *db) {
 	deen_index_add_context *result = (deen_index_add_context *) deen_emalloc(sizeof(deen_index_add_context));
-	bzero(result, sizeof(deen_index_add_context));
+	memset(result, 0, sizeof(deen_index_add_context));
 	result->db = db;
 	return result;
 }
@@ -386,7 +386,7 @@ void deen_index_add(
 	}
 
 	prefix_ids = deen_emalloc(prefix_count * sizeof(uint32_t));
-	bzero(prefix_ids, sizeof(uint32_t) * prefix_count);
+	memset(prefix_ids, 0, sizeof(uint32_t) * prefix_count);
 
 #ifdef DEBUG
 	deen_millis start_ms = deen_millis_since_epoc();

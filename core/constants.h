@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -80,5 +80,16 @@ worth indexing.
 
 #define DEEN_TRUE 1
 #define DEEN_FALSE 0
+
+/*
+ This is the file separator used to separate directories and paths in the file
+ system; differs between Windows and not Windows.
+ */
+
+#ifdef __MINGW32__
+#define DEEN_FILE_SEP "\\"
+#else
+#define DEEN_FILE_SEP "/"
+#endif
 
 #endif /* __CONSTANTS_H */

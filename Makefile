@@ -1,6 +1,6 @@
 # =============================================================================
 #
-# Copyright 2016, Andrew Lindesay. All Rights Reserved.
+# Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
 # Distributed under the terms of the MIT License.
 #
 # Authors:
@@ -10,21 +10,28 @@
 
 VERSIONMAJOR=0
 VERSIONMIDDLE=1
-VERSIONMINOR=3
+VERSIONMINOR=4
 VERSION=$(VERSIONMAJOR).$(VERSIONMIDDLE).$(VERSIONMINOR)
+
+SQLITEVERSION=3210000
+SQLITEZIPURL=http://sqlite.org/2017/sqlite-amalgamation-$(SQLITEVERSION).zip
+SQLITETMP=sqlite-amalgamation-$(SQLITEVERSION).zip
+SQLITEDIR=sqlite-amalgamation-$(SQLITEVERSION)
+SQLITEHEADER=$(SQLITEDIR)/sqlite3.h
 
 CC=gcc
 RM=rm -f
 FLEX=flex
 ECHO=@echo
 ZIP=zip
+WGET=wget
 
-CFLAGSOTHER=-Wall -c -I . -DDEEN_VERSION=\"$(VERSION)\"
+CFLAGSOTHER=-Wall -c -I . -I $(SQLITEDIR) -DDEEN_VERSION=\"$(VERSION)\"
 
 # Different flags are required for the compilation of the flex output file
 # because some warnings can be tolerated from that.
 
-CFLAGSFLEXOTHER=-c -I .
+CFLAGSFLEXOTHER=-c -I . -I $(SQLITEDIR)
 
 # -fstack-protector; checks for operations happening on the stack.  Requires
 # also use of -lssp
@@ -38,9 +45,10 @@ else
 endif
 
 COREOBJS=core/common.o core/entry.o core/entry_parse.o core/install.o \
-	core/keyword.o core/search.o core/index.o
+	core/keyword.o core/search.o core/index.o \
+	$(SQLITEDIR)/sqlite3.o
 CLIOBJS=cli/climain.o cli/renderplain.o cli/rendercommon.o
-LDFLAGSOTHER=-lsqlite3
+LDFLAGSOTHER=
 
 TESTKEYWORDOBJS=core-test/keyword-test.o
 TESTCOMMONOBJS=core-test/common-test.o
@@ -49,7 +57,7 @@ TESTENTRYOBJS=core-test/entry-test.o
 
 all: deen
 
-deen: $(CLILIBS) $(COREOBJS) $(CLIOBJS)
+deen: $(SQLITEHEADER) $(CLILIBS) $(COREOBJS) $(CLIOBJS)
 	$(CC) $(CLIOBJS) $(COREOBJS) -o deen $(LDFLAGS) $(LDFLAGSOTHER)
 
 # ----------------------------------
@@ -61,19 +69,27 @@ tests: deen-keyword-test deen-common-test deen-index-test deen-entry-test
 	./deen-index-test
 	./deen-entry-test
 
-deen-keyword-test: $(COREOBJS) $(TESTKEYWORDOBJS)
+deen-keyword-test: $(SQLITEHEADER) $(COREOBJS) $(TESTKEYWORDOBJS)
 	$(CC) $(TESTKEYWORDOBJS) $(COREOBJS) -o deen-keyword-test $(LDFLAGS) $(LDFLAGSOTHER)
 
-deen-common-test: $(COREOBJS) $(TESTCOMMONOBJS)
+deen-common-test: $(SQLITEHEADER) $(COREOBJS) $(TESTCOMMONOBJS)
 	$(CC) $(TESTCOMMONOBJS) $(COREOBJS) -o deen-common-test $(LDFLAGS) $(LDFLAGSOTHER)
 
-deen-index-test: $(COREOBJS) $(TESTINDEXOBJS)
+deen-index-test: $(SQLITEHEADER) $(COREOBJS) $(TESTINDEXOBJS)
 	$(CC) $(TESTINDEXOBJS) $(COREOBJS) -o deen-index-test $(LDFLAGS) $(LDFLAGSOTHER)
 
-deen-entry-test: $(COREOBJS) $(TESTENTRYOBJS)
+deen-entry-test: $(SQLITEHEADER) $(COREOBJS) $(TESTENTRYOBJS)
 	$(CC) $(TESTENTRYOBJS) $(COREOBJS) -o deen-entry-test $(LDFLAGS) $(LDFLAGSOTHER)
 
 # ----------------------------------
+
+$(SQLITETMP):
+	$(WGET) $(SQLITEZIPURL)
+
+$(SQLITEDIR)/sqlite3.c $(SQLITEDIR)/sqlite3.h: $(SQLITETMP)
+	unzip $(SQLITETMP)
+	touch $(SQLITEDIR)/sqlite3.c
+	touch $(SQLITEDIR)/sqlite3.h
 
 core/entry_parse.c: core/entry_parse.flex
 	$(FLEX) -o core/entry_parse.c core/entry_parse.flex
@@ -85,10 +101,17 @@ core/entry_parse.o: core/entry_parse.c
 	$(CC) $(CFLAGS) $(CFLAGSOTHER) -o $@ $^
 
 clean:
+	$(RM) $(SQLITETMP)
+	$(RM) $(SQLITEDIR)/*.o
+	$(RM) $(SQLITEDIR)/*.c
+	$(RM) $(SQLITEDIR)/*.h
 	$(RM) core/*.o
 	$(RM) core/entry_parse.c
 	$(RM) cli/*.o
 	$(RM) deen
 	$(RM) deen-*-test
+	$(RM) deen.exe
+	$(RM) deen-*-test.exe
+	$(RM) tmp_index_e2e.sqlite
 
 # ----------------------------------

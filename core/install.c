@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 #include <sys/types.h>
-#include <sys/uio.h>
+//#include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -65,9 +65,11 @@ in the callback to point to the tree and the prior progress.
 typedef struct deen_index_context deen_index_context;
 struct deen_index_context {
 
+#ifndef __MINGW32__
 	// cancellation management.
 	pthread_mutex_t *cancel_mutex;
 	deen_bool *cancel;
+#endif
 
 	// handle to the index database.
 	deen_index_add_context *index_add_context;
@@ -92,6 +94,7 @@ struct deen_index_context {
 // ---------------------------------------------------------------
 
 
+#ifndef __MINGW32__
 static deen_bool deen_install_atomic_cancel_value(
 	pthread_mutex_t *cancel_mutex,
 	deen_bool *cancel // boolean
@@ -99,17 +102,18 @@ static deen_bool deen_install_atomic_cancel_value(
 	deen_bool local_cancel = DEEN_FALSE;
 
 	if (NULL != cancel_mutex) {
-	    pthread_mutex_lock(cancel_mutex);
+		pthread_mutex_lock(cancel_mutex);
 	}
 
 	local_cancel = cancel[0];
 
 	if (NULL != cancel_mutex) {
-	    pthread_mutex_unlock(cancel_mutex);
+		pthread_mutex_unlock(cancel_mutex);
 	}
 
 	return local_cancel;
 }
+#endif
 
 
 // ---------------------------------------------------------------
@@ -123,30 +127,30 @@ enum deen_install_check_ding_format_check_result deen_install_check_for_ding_for
 // see if we have a gzip file; if so then we need to warn the user
 // that they need to decompress the file first.
 
-    if (
+	if (
 		DEEN_INSTALL_CHECK_OK == result &&
 		strlen(filename) > 3 &&
 		0 == strncmp(".gz", &filename[strlen(filename) - 3], 3)) {
 		result = DEEN_INSTALL_CHECK_IS_COMPRESSED;
-    } else {
+	} else {
 		DEEN_LOG_INFO0("candidate file does not appear to be gzip compressed");
-    }
+	}
 
 // first open the file to be checked.
 
-    if (DEEN_INSTALL_CHECK_OK == result) {
+	if (DEEN_INSTALL_CHECK_OK == result) {
 		fd = open(filename, O_RDONLY);
-    }
+	}
 
-    if (DEEN_INSTALL_CHECK_OK == result && fd < 0) {
+	if (DEEN_INSTALL_CHECK_OK == result && fd < 0) {
 		result = DEEN_INSTALL_CHECK_IS_COMPRESSED;
-    } else {
+	} else {
 		DEEN_LOG_INFO0("candidate file was opened successfully");
-    }
+	}
 
-    // load in some 4k of the file to inspect.
+	// load in some 4k of the file to inspect.
 
-    if (DEEN_INSTALL_CHECK_OK == result) {
+	if (DEEN_INSTALL_CHECK_OK == result) {
 		char buffer[DEEN_SIZE_CHECK_DING_BUFFER];
 
 		if (DEEN_SIZE_CHECK_DING_BUFFER != read(fd, buffer, DEEN_SIZE_CHECK_DING_BUFFER)) {
@@ -195,15 +199,15 @@ enum deen_install_check_ding_format_check_result deen_install_check_for_ding_for
 				result = DEEN_INSTALL_CHECK_BAD_FORMAT;
 			}
 		}
-    }
+	}
 
-    // close the temporary file handle.
+	// close the temporary file handle.
 
 	if (fd >= 0) {
 		close(fd);
 	}
 
-    return result;
+	return result;
 }
 
 
@@ -237,7 +241,7 @@ static deen_bool deen_remove_fileobject(const char *filename) {
 		}
 	}
 	else {
-	    result = DEEN_TRUE;
+		result = DEEN_TRUE;
 	}
 
 	return result;
@@ -247,7 +251,7 @@ static deen_bool deen_remove_fileobject(const char *filename) {
 static deen_bool deen_remove_fileobject_in_root_dir(const char *deen_root_dir, const char *leafname) {
 	char *buffer = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(leafname) + 2);
 	uint8_t result;
-	sprintf(buffer,"%s/%s", deen_root_dir, leafname);
+	sprintf(buffer,"%s%s%s", deen_root_dir, DEEN_FILE_SEP, leafname);
 	result = deen_remove_fileobject(buffer);
 	return result;
 }
@@ -261,7 +265,13 @@ static deen_bool deen_remove_fileobject_in_root_dir(const char *deen_root_dir, c
 static deen_bool deen_install_init(const char *deen_root_dir) {
 
 	if (!deen_exists_fileobject(deen_root_dir)) {
-		if (0 == mkdir(deen_root_dir, 0777)) {
+		if (0 == 
+#ifdef __MINGW32__
+					mkdir(deen_root_dir)
+#else
+					mkdir(deen_root_dir, 0777)
+#endif
+				) {
 			DEEN_LOG_INFO1("did create the deen data directory; %s", deen_root_dir);
 		}
 		else {
@@ -276,7 +286,7 @@ static deen_bool deen_install_init(const char *deen_root_dir) {
 	}
 
 	if (!deen_remove_fileobject_in_root_dir(deen_root_dir, DEEN_LEAF_DING_DATA)) {
-	    	DEEN_LOG_ERROR0("failed to delete the existing data object");
+			DEEN_LOG_ERROR0("failed to delete the existing data object");
 		return DEEN_FALSE;
 	}
 
@@ -361,7 +371,8 @@ static void deen_index_flush_context_prefixes_to_index_trace_log(deen_index_cont
 		size_t i;
 
 		fputs(DEEN_PREFIX_TRACE,stdout);
-		fprintf(stdout, " %8lld <-- { ", (unsigned long long) context->current_ref);
+		//fprintf(stdout, " %8lld <-- { ", (unsigned long long) context->current_ref);
+		fprintf(stdout, " %8lu <-- { ", (unsigned long) context->current_ref);
 
 		for (i = 0; i < context->prefix_count; i++) {
 			if (0!=i) {
@@ -431,7 +442,11 @@ static deen_bool deen_index_callback(
 
 	if (len >= DEEN_INDEXING_MIN) {
 
-		if (deen_install_atomic_cancel_value(context2->cancel_mutex, context2->cancel)) {
+		if (DEEN_FALSE
+#ifndef __MINGW32__
+			|| deen_install_atomic_cancel_value(context2->cancel_mutex, context2->cancel)
+#endif
+		) {
 			result = DEEN_FALSE; // stop processing
 		}
 		else {
@@ -477,7 +492,9 @@ static deen_bool deen_index_callback(
 
 
 uint8_t deen_install_from_path(
+#ifndef __MINGW32__
 	pthread_mutex_t *cancel_mutex,
+#endif
 	deen_bool *cancel, // boolean
 	const char *deen_root_dir,
 	const char *ding_filename,
@@ -489,8 +506,8 @@ uint8_t deen_install_from_path(
 	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
 	char *index_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_INDEX) + 2);
 
-	sprintf(data_path, "%s/%s", deen_root_dir, DEEN_LEAF_DING_DATA);
-	sprintf(index_path, "%s/%s", deen_root_dir, DEEN_LEAF_INDEX);
+	sprintf(data_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_DING_DATA);
+	sprintf(index_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_INDEX);
 
 	progress_cb(DEEN_INSTALL_STATE_STARTING, 0.0f);
 
@@ -499,10 +516,17 @@ uint8_t deen_install_from_path(
 	// first thing is to copy the file over to the new location.
 
 	if (
-		!is_error &&
-		!deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
+		!is_error
+#ifndef __MINGW32__
+		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+#endif
+	) {
 
-		int fd_src_data = open(ding_filename,O_RDONLY);
+		int fd_src_data = open(ding_filename,O_RDONLY
+#ifdef __MINGW32__
+			|O_BINARY
+#endif
+		);
 
 		if (-1==fd_src_data) {
 			DEEN_LOG_INFO1("unable to open the input data file %s",ding_filename);
@@ -514,9 +538,17 @@ uint8_t deen_install_from_path(
 			DEEN_LOG_INFO1("source opened for copy to install location; %s",ding_filename);
 
 			fd_dest_data = open(
-			    data_path,
-				O_RDWR|O_CREAT|O_TRUNC,
-				S_IRUSR|S_IRGRP|S_IROTH);
+				data_path,
+				O_RDWR|O_CREAT|O_TRUNC
+#ifdef __MINGW32__
+				|O_BINARY
+#endif
+				,
+				S_IRUSR
+#ifndef __MINGW32__
+				|S_IRGRP|S_IROTH
+#endif
+							);
 
 			if (-1==fd_dest_data) {
 				DEEN_LOG_INFO1("unable to open the output data file %s",data_path);
@@ -550,7 +582,12 @@ uint8_t deen_install_from_path(
 
 	// create the target sqllite database.
 
-	if (!is_error && !deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
+	if (
+		!is_error
+#ifndef __MINGW32__
+		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+#endif
+		) {
 		if (SQLITE_OK != sqlite3_open_v2(
 			index_path, &db,
 			SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
@@ -561,14 +598,24 @@ uint8_t deen_install_from_path(
 		}
 	}
 
-	if (!is_error && !deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
+	if (
+		!is_error
+#ifndef __MINGW32__
+		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+#endif
+	) {
 		deen_index_init(db);
 		DEEN_LOG_TRACE0("did initialize the index database");
 	}
 
 	fd_data = -1;
 
-	if (!is_error && !deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
+	if (
+		!is_error
+#ifndef __MINGW32__
+		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+#endif
+	) {
 		fd_data = open(data_path, O_RDONLY);
 
 		if ((-1==fd_data) || DEEN_CAUSE_ERROR_IN_INSTALL) {
@@ -584,8 +631,10 @@ uint8_t deen_install_from_path(
 		time_t secs_before;
 		deen_index_context index_context;
 
+#ifndef __MINGW32__
 		index_context.cancel_mutex = cancel_mutex;
 		index_context.cancel = cancel; // boolean
+#endif
 		index_context.index_add_context = deen_index_add_context_create(db);
 		index_context.lastprogress = -1.0f;
 		index_context.progress_cb = progress_cb;
@@ -659,7 +708,12 @@ uint8_t deen_install_from_path(
 	// delete the stored data as well as any partially written
 	// index.
 
-	if (is_error || deen_install_atomic_cancel_value(cancel_mutex, cancel)) {
+	if (
+		is_error
+#ifndef __MINGW32__
+		|| !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+#endif
+	) {
 		DEEN_LOG_ERROR0("indexing not completed -> clean up files");
 		deen_remove_fileobject(data_path);
 		// deen_remove_fileobject(index_path);

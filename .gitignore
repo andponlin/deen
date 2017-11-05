@@ -1,7 +1,9 @@
 .*
 *.o
 *.a
+*.exe
 nbproject
+sqlite-amalgamation*
 entry_parse.c
 deen
 deen-*-test
