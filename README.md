@@ -4,7 +4,7 @@ Deen is a simple German-English bi-lingual dictionary program.  It provides only
 
 ## Contact / Author
 
-Andrew Lindesay <apl@lindesay.co.nz> ([web](http://www.silvereye.co.nz/))
+Andrew Lindesay <apl@lindesay.co.nz> ([web](http://www.lindesay.co.nz/))
 
 ## License
 
