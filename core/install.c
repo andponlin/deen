@@ -694,7 +694,7 @@ uint8_t deen_install_from_path(
 		}
 	}
 
-	if (-1==fd_data) {
+``	if (-1 != fd_data) {
 		close(fd_data);
 		DEEN_LOG_INFO1("closed input file; %s",data_path);
 	}
@@ -711,7 +711,7 @@ uint8_t deen_install_from_path(
 	if (
 		is_error
 #ifndef __MINGW32__
-		|| !deen_install_atomic_cancel_value(cancel_mutex, cancel)
+		|| deen_install_atomic_cancel_value(cancel_mutex, cancel)
 #endif
 	) {
 		DEEN_LOG_ERROR0("indexing not completed -> clean up files");

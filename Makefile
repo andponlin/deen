@@ -10,7 +10,7 @@
 
 VERSIONMAJOR=0
 VERSIONMIDDLE=1
-VERSIONMINOR=4
+VERSIONMINOR=5
 VERSION=$(VERSIONMAJOR).$(VERSIONMIDDLE).$(VERSIONMINOR)
 
 SQLITEVERSION=3210000
@@ -18,6 +18,7 @@ SQLITEZIPURL=http://sqlite.org/2017/sqlite-amalgamation-$(SQLITEVERSION).zip
 SQLITETMP=sqlite-amalgamation-$(SQLITEVERSION).zip
 SQLITEDIR=sqlite-amalgamation-$(SQLITEVERSION)
 SQLITEHEADER=$(SQLITEDIR)/sqlite3.h
+SQLITECOMPILEOPTS=-DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
 
 CC=gcc
 RM=rm -f
@@ -26,7 +27,7 @@ ECHO=@echo
 ZIP=zip
 WGET=wget
 
-CFLAGSOTHER=-Wall -c -I . -I $(SQLITEDIR) -DDEEN_VERSION=\"$(VERSION)\"
+CFLAGSOTHER=-Wall -c -I . -I $(SQLITEDIR) -DDEEN_VERSION=\"$(VERSION)\" $(SQLITECOMPILEOPTS)
 
 # Different flags are required for the compilation of the flex output file
 # because some warnings can be tolerated from that.
@@ -100,11 +101,13 @@ core/entry_parse.o: core/entry_parse.c
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGSOTHER) -o $@ $^
 
-clean:
+clean-sqlite:
 	$(RM) $(SQLITETMP)
 	$(RM) $(SQLITEDIR)/*.o
 	$(RM) $(SQLITEDIR)/*.c
 	$(RM) $(SQLITEDIR)/*.h
+
+clean-own:
 	$(RM) core/*.o
 	$(RM) core/entry_parse.c
 	$(RM) cli/*.o
@@ -113,5 +116,7 @@ clean:
 	$(RM) deen.exe
 	$(RM) deen-*-test.exe
 	$(RM) tmp_index_e2e.sqlite
+
+clean: clean-sqlite clean-own
 
 # ----------------------------------
