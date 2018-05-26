@@ -694,7 +694,7 @@ uint8_t deen_install_from_path(
 		}
 	}
 
-``	if (-1 != fd_data) {
+	if (-1 != fd_data) {
 		close(fd_data);
 		DEEN_LOG_INFO1("closed input file; %s",data_path);
 	}
