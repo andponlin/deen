@@ -27,9 +27,13 @@ To build the software run the ```make``` command at the top level.  This will fa
 
 Deen will build on the MinGW environment.  You will need to ensure that the prerequisite tools listed above are installed using the MinGW installation tool.
 
-### Debian
+### Debian / Ubuntu
 
-TODO
+Your installation should have the tools required to build, but in case not;
+
+```
+sudo apt-get install wget flex make unzip gcc
+``` 
 
 ### macOS
 
@@ -37,7 +41,7 @@ Install the Apple developers' tools.
 
 ### Haiku-OS
 
-TODO
+The Haiku default install should have all the tools necessary to compile ```deen```.
 
 ### Installation
 
