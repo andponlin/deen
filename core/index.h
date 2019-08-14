@@ -9,16 +9,19 @@
 #ifndef __INDEX_H
 #define __INDEX_H
 
-#include "types.h"
-
 #include <stdint.h>
 #include <sqlite3.h>
+
+#include "types.h"
 
 /*
 This function will populate the table structures into the database.
 */
 
 void deen_index_init(sqlite3 *db);
+
+void deen_transaction_begin(sqlite3 *db);
+void deen_transaction_commit(sqlite3 *db);
 
 /*
 Creates a context that can then be used with indexing functions.  The context

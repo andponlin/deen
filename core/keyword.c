@@ -6,10 +6,11 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
+#include "keyword.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "keyword.h"
 #include "common.h"
 #include "constants.h"
 
@@ -307,4 +308,12 @@ deen_first_keyword deen_ifind_first_keyword(
 	}
 
 	return result;
+}
+
+void deen_trace_log_keywords(deen_keywords *keywords) {
+	uint32_t i;
+
+	for(i=0;i<keywords->count;i++) {
+		DEEN_LOG_TRACE2("keyword %u; [%s]", i, keywords->keywords[i]);
+	}
 }

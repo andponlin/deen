@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -9,13 +9,24 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#include <ctype.h>
+#include <stdarg.h>
+#include <sys/time.h>
+
 #include "constants.h"
 #include "types.h"
 
-#include <ctype.h>
-#include <stdarg.h>
+// ---------------------------------------------------------------
+// FILE SYSTEM
+// ---------------------------------------------------------------
 
-#include <sys/time.h>
+/*
+The caller maintains ownership of this data and should free it.
+*/
+
+char *deen_root_dir();
+char *deen_data_path(const char *root_dir);
+char *deen_index_path(const char *root_dir);
 
 // ---------------------------------------------------------------
 // UTILITY

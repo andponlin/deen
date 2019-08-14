@@ -1,6 +1,6 @@
 # =============================================================================
 #
-# Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
+# Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
 # Distributed under the terms of the MIT License.
 #
 # Authors:
@@ -9,8 +9,8 @@
 # =============================================================================
 
 VERSIONMAJOR=0
-VERSIONMIDDLE=1
-VERSIONMINOR=5
+VERSIONMIDDLE=2
+VERSIONMINOR=1
 VERSION=$(VERSIONMAJOR).$(VERSIONMIDDLE).$(VERSIONMINOR)
 
 SQLITEVERSION=3210000
@@ -20,6 +20,7 @@ SQLITEDIR=sqlite-amalgamation-$(SQLITEVERSION)
 SQLITEHEADER=$(SQLITEDIR)/sqlite3.h
 SQLITECOMPILEOPTS=-DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION
 
+GLIBCOMPILERESOURCES=glib-compile-resources
 CC=gcc
 RM=rm -f
 FLEX=flex
@@ -49,7 +50,11 @@ COREOBJS=core/common.o core/entry.o core/entry_parse.o core/install.o \
 	core/keyword.o core/search.o core/index.o \
 	$(SQLITEDIR)/sqlite3.o
 CLIOBJS=cli/climain.o cli/renderplain.o cli/rendercommon.o
+GTKOBJS=gui-gtk/ggtkmain.o gui-gtk/ggtkinstall.o gui-gtk/ggtkgeneral.o \
+	gui-gtk/ggtkresources.o gui-gtk/ggtksearch.o gui-gtk/ggtkrendertextbuffer.o
+GTKRSRCS=gui-gtk/ggtkresources.xml gui-gtk/ggtkmain.glade
 LDFLAGSOTHER=
+GTKLDFLAGS=-lpthread
 
 TESTKEYWORDOBJS=core-test/keyword-test.o
 TESTCOMMONOBJS=core-test/common-test.o
@@ -60,6 +65,9 @@ all: deen
 
 deen: $(SQLITEHEADER) $(CLILIBS) $(COREOBJS) $(CLIOBJS)
 	$(CC) $(CLIOBJS) $(COREOBJS) -o deen $(LDFLAGS) $(LDFLAGSOTHER)
+
+deen-ggtk: $(SQLITEHEADER) $(GTKOBJS) $(COREOBJS)
+	$(CC) -rdynamic $(GTKOBJS) $(COREOBJS) -o deen-ggtk $(LDFLAGS) $(LDFLAGSOTHER) $(GTKLDFLAGS) $(shell pkg-config gtk+-3.0 --libs)
 
 # ----------------------------------
 # TESTS
@@ -98,6 +106,21 @@ core/entry_parse.c: core/entry_parse.flex
 core/entry_parse.o: core/entry_parse.c
 	$(CC) $(CFLAGS) $(CFLAGSFLEXOTHER) -o $@ $^
 
+gui-gtk/ggtkresources.h: $(GTKRSRCS)
+	$(GLIBCOMPILERESOURCES) gui-gtk/ggtkresources.xml --sourcedir=gui-gtk \
+	--c-name deen_ggtk --manual-register --generate-header --target=gui-gtk/ggtkresources.h
+
+gui-gtk/ggtkresources.c: $(GTKRSRCS)
+	$(GLIBCOMPILERESOURCES) gui-gtk/ggtkresources.xml --sourcedir=gui-gtk \
+	--c-name deen_ggtk --manual-register --generate-source --target=gui-gtk/ggtkresources.c
+
+gui-gtk/ggtkmain.o: gui-gtk/ggtkmain.c gui-gtk/ggtkresources.h
+	$(CC) $(CFLAGS) $(CFLAGSOTHER) $(shell pkg-config gtk+-3.0 --cflags) \
+	-o gui-gtk/ggtkmain.o gui-gtk/ggtkmain.c
+
+gui-gtk/%.o: gui-gtk/%.c
+	$(CC) $(CFLAGS) $(CFLAGSOTHER) $(shell pkg-config gtk+-3.0 --cflags) -o $@ $^
+
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGSOTHER) -o $@ $^
 
@@ -117,6 +140,13 @@ clean-own:
 	$(RM) deen-*-test.exe
 	$(RM) tmp_index_e2e.sqlite
 
-clean: clean-sqlite clean-own
+clean-gui:
+	$(RM) deen-gui
+	$(RM) gui-gtk/ggtkresources.c
+	$(RM) gui-gtk/ggtkresources.h
+	$(RM) gui-gtk/*.o
+	$(RM) gui-gtk/*.o
+
+clean: clean-sqlite clean-own clean-gui
 
 # ----------------------------------

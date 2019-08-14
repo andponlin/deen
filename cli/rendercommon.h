@@ -9,6 +9,8 @@
 #ifndef RENDERCOMMON_H
 #define RENDERCOMMON_H
 
+#include "core/types.h"
+
 /*
 Figures out if the current environment is UTF8 or not.
 */

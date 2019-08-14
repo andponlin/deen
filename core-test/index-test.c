@@ -13,12 +13,12 @@ index and then making a basic query of it to make sure that the expected
 results come out.
 */
 
-#import "core/index.h"
-#import "core/types.h"
-#import "core/common.h"
-
 #include <stdio.h>
 #include <sqlite3.h>
+
+#include "core/index.h"
+#include "core/common.h"
+#include "core/types.h"
 
 #define OUTPUT_DATABASE_FILE "tmp_index_e2e.sqlite"
 

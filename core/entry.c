@@ -1,17 +1,17 @@
 /*
- * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "common.h"
 #include "constants.h"
-
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
 
 // ---------------------------------------------------------------
 // CREATION

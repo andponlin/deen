@@ -9,11 +9,10 @@
 #ifndef __TYPES_H
 #define __TYPES_H
 
-#include "constants.h"
-
+#include <sqlite3.h>
 #include <sys/types.h>
 
-#include <sqlite3.h>
+#include "constants.h"
 
 /*
 This provides a type for a boolean (actually a byte).

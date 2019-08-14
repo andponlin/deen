@@ -6,11 +6,7 @@ nbproject
 sqlite-amalgamation*
 entry_parse.c
 deen
+deen-ggtk
 deen-*-test
-leidx2/lefiletoolstest
-leidx2/leidxdumptest
-leidx2/leidxindextest
-leidx2/leidxoptimisetest
-leidx2/leidxsearchtest
-leidx2/leucconverttest
-leidx2/testoutputs/*
+gui-gtk/ggtkresources.*
+

@@ -55,5 +55,6 @@ deen_first_keyword deen_ifind_first_keyword(const uint8_t *s, deen_keywords *key
 
 // ---------------------------------------------------------------
 
+void deen_trace_log_keywords(deen_keywords *keywords);
 
 #endif /* __KEYWORD_H */

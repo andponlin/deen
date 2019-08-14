@@ -7,12 +7,16 @@
  */
 
 #include "index.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+
 #include "common.h"
 
-#include <string.h>
-#include <stdlib.h>
-
-#include <sys/types.h>
+// transaction
+#define SQL_TRANSACTION_BEGIN "BEGIN"
+#define SQL_TRANSACTION_COMMIT "COMMIT"
 
 // init
 #define SQL_TABLE_PREFIX_CREATE "CREATE TABLE deen_prefix(id INTEGER PRIMARY KEY, prefix VARCHAR(4) UNIQUE NOT NULL)"
@@ -51,6 +55,16 @@ void deen_index_init(sqlite3 *db) {
 	deen_index_run_sql(db, SQL_TABLE_PREFIX_INDEX_CREATE);
 	deen_index_run_sql(db, SQL_TABLE_REF_CREATE);
 	deen_index_run_sql(db, SQL_TABLE_REF_INDEX_CREATE);
+}
+
+
+void deen_transaction_begin(sqlite3 *db) {
+	sqlite3_exec(db, SQL_TRANSACTION_BEGIN, NULL, NULL, NULL);
+}
+
+
+void deen_transaction_commit(sqlite3 *db) {
+	sqlite3_exec(db, SQL_TRANSACTION_COMMIT, NULL, NULL, NULL);
 }
 
 

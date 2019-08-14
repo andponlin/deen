@@ -6,14 +6,15 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
+#include "rendercommon.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "core/common.h"
 #include "core/constants.h"
 
-#include "rendercommon.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 #ifndef __MINGW32__
 static deen_bool deen_term_is_utf8_langenv(char *lang_value) {

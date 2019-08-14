@@ -6,14 +6,14 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#include "core/types.h"
-#include "core/common.h"
-
-#include <string.h>
-#include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#include "core/common.h"
+#include "core/types.h"
 
 static void test_utf8_usascii_equivalent() {
 	if (0 != strcmp((char *) deen_utf8_usascii_equivalent((uint8_t *) "\xc3\x9c", 2), "UE")) {

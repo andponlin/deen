@@ -1,30 +1,28 @@
 /*
- * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#include "common.h"
-#include "constants.h"
-#include "keyword.h"
-#include "entry.h"
 #include "search.h"
-#include "index.h"
 
 #include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-
 #ifdef __MINGW32__
 #include <io.h>
 #endif
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 
+#include "common.h"
+#include "constants.h"
+#include "entry.h"
+#include "index.h"
+#include "keyword.h"
 
 #define SIZE_BUFFER_LINE_DEFAULT 196
 
@@ -46,11 +44,8 @@ deen_search_context *deen_search_init(char *deen_root_dir) {
 	deen_search_context *context = (deen_search_context *) deen_emalloc(sizeof(deen_search_context));
 
 	deen_bool is_error = DEEN_FALSE;
-	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
-	char *index_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_INDEX) + 2);
-
-	sprintf(data_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_DING_DATA);
-	sprintf(index_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_INDEX);
+	char *data_path = deen_data_path(deen_root_dir);
+	char *index_path = deen_index_path(deen_root_dir);
 
 	context->fd_data = open(data_path, O_RDONLY
 #ifdef __MINGW32__

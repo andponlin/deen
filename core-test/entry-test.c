@@ -6,12 +6,13 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "core/common.h"
 #include "core/entry.h"
 #include "core/keyword.h"
 
-#include <string.h>
-#include <stdlib.h>
 
 static deen_entry deen_create_example_1() {
 	return deen_entry_create(

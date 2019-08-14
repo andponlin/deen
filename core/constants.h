@@ -55,6 +55,7 @@ worth indexing.
 // This constant controls how many results to show by default.
 
 #define DEEN_RESULT_SIZE_DEFAULT 10
+#define DEEN_RESULT_SIZE_MAX SIZE_MAX
 
 /**
  * This constant is used when establishing the distance that a word is

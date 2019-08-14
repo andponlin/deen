@@ -6,11 +6,12 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#include "core/types.h"
+#include <string.h>
+
 #include "core/common.h"
 #include "core/keyword.h"
+#include "core/types.h"
 
-#include <string.h>
 
 static void test_keywords_all_present() {
 	deen_keywords *keywords = deen_keywords_create();

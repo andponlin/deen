@@ -1,24 +1,68 @@
 /*
- * Copyright 2016, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#include "constants.h"
-
 #include "common.h"
 
+#include <limits.h>
+#ifndef __MINGW32__
+#include <pwd.h>
+#endif
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
-#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include "constants.h"
 
 #define ISWORDCHAR(C) (!isspace(C) && !ispunct(C))
+
+// ---------------------------------------------------------------
+// FILE SYSTEM
+// ---------------------------------------------------------------
+
+char *deen_root_dir() {
+	char *deen_root_dir = NULL;
+	char *deen_home = getenv("DEENDATAHOME");
+
+	if (NULL != deen_home && 0 != strlen(deen_home)) {
+		deen_root_dir = (char *) deen_emalloc(strlen(deen_home) + 1);
+		strcpy(deen_root_dir, deen_home);
+	} else {
+		char *home_dir;
+
+#ifdef __MINGW32__
+		home_dir = getenv("USERPROFILE");
+#else
+		struct passwd *pw = getpwuid(getuid());
+		home_dir = pw->pw_dir;
+#endif
+		deen_root_dir = (char *) deen_emalloc(strlen(home_dir) + 2 + strlen(DIR_DEEN));
+		sprintf(deen_root_dir, "%s%s%s", home_dir, DEEN_FILE_SEP, DIR_DEEN);
+	}
+
+	return deen_root_dir;
+}
+
+static char *deen_leaf_path(const char *root_dir, const char *leafname) {
+	char *result = (char *) deen_emalloc(strlen(root_dir) + strlen(leafname) + 2);
+	sprintf(result, "%s%s%s", root_dir, DEEN_FILE_SEP, leafname);
+	return result;
+}
+
+char *deen_data_path(const char *root_dir) {
+	return deen_leaf_path(root_dir, DEEN_LEAF_DING_DATA);
+}
+
+char *deen_index_path(const char *root_dir) {
+	return deen_leaf_path(root_dir, DEEN_LEAF_INDEX);
+}
 
 // ---------------------------------------------------------------
 // UTILITY
@@ -479,7 +523,7 @@ deen_bool deen_for_each_word_from_file(
 	off_t file_read = 0;
 	off_t file_len = lseek(fd,0,SEEK_END);
 
-	if (-1==file_len) {
+	if (-1 == file_len) {
 		DEEN_LOG_ERROR0("unable to obtain the length of the file to be processed");
 		result = DEEN_FALSE;
 	}

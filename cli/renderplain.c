@@ -6,22 +6,26 @@
  *		Andrew Lindesay, apl@lindesay.co.nz
  */
 
-#include "core/constants.h"
-#include "core/keyword.h"
-
 #include "renderplain.h"
-#include "rendercommon.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-
 #ifdef __MINGW32__
 #include <windows.h>
+#endif
+
+#include "core/constants.h"
+#include "core/keyword.h"
+#include "rendercommon.h"
+
+
+#ifdef __MINGW32__
 #define WIN_ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #define WIN_CODE_PAGE_UTF8 65001
 #endif
+
 
 /*
 These character sequences code for various colors in the ANSI terminal.
@@ -58,8 +62,6 @@ static void deen_render_tty_or_nontty(
 		}
 	}
 }
-
-
 
 /*
 This will go through the text and look for keywords.  It will highlight any
@@ -171,17 +173,17 @@ void deen_render_plain_entry_sub(
 	deen_keywords *keywords,
 	deen_bool tty) {
 
-    if (NULL!=sub) {
-	uint32_t i;
+	if (NULL!=sub) {
+		uint32_t i;
 
-	for (i=0;i<sub->sub_sub_count;i++) {
-		if (0!=i) {
-			fputs("; ", stdout);
+		for (i=0;i<sub->sub_sub_count;i++) {
+			if (0!=i) {
+				fputs("; ", stdout);
+			}
+
+			deen_render_plain_entry_sub_sub(&(sub->sub_subs[i]), keywords, tty);
 		}
-
-		deen_render_plain_entry_sub_sub(&(sub->sub_subs[i]), keywords, tty);
 	}
-    }
 }
 
 void deen_render_plain_entry(

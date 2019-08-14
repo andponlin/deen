@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2016-2019, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -11,25 +11,20 @@
 
 #include "install.h"
 
-#include "constants.h"
-#include "common.h"
-#include "index.h"
-
-#include <sqlite3.h>
-
-#include <string.h>
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sqlite3.h>
 #include <unistd.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <sys/types.h>
-//#include <sys/uio.h>
-#include <sys/stat.h>
-#include <sys/time.h>
+#include "common.h"
+#include "constants.h"
+#include "index.h"
 
 /*
 This method will open the supplied file and will try to
@@ -65,17 +60,15 @@ in the callback to point to the tree and the prior progress.
 typedef struct deen_index_context deen_index_context;
 struct deen_index_context {
 
-#ifndef __MINGW32__
 	// cancellation management.
-	pthread_mutex_t *cancel_mutex;
-	deen_bool *cancel;
-#endif
+	deen_is_cancelled_cb is_cancelled_cb;
 
 	// handle to the index database.
 	deen_index_add_context *index_add_context;
 
 	// management of the progress of the indexing.
 	float lastprogress;
+	void *progress_cb_context;
 	deen_install_progress_cb progress_cb;
 
 	// buffer re-used between calls in order to convert text to upper case.
@@ -93,31 +86,32 @@ struct deen_index_context {
 
 // ---------------------------------------------------------------
 
-
-#ifndef __MINGW32__
-static deen_bool deen_install_atomic_cancel_value(
-	pthread_mutex_t *cancel_mutex,
-	deen_bool *cancel // boolean
-) {
-	deen_bool local_cancel = DEEN_FALSE;
-
-	if (NULL != cancel_mutex) {
-		pthread_mutex_lock(cancel_mutex);
+static const char *deen_cli_state_to_string(enum deen_install_state state) {
+	switch(state) {
+		case DEEN_INSTALL_STATE_IDLE: return "idle";
+		case DEEN_INSTALL_STATE_STARTING: return "starting";
+		case DEEN_INSTALL_STATE_INDEXING: return "indexing";
+		case DEEN_INSTALL_STATE_COMPLETED: return "completed";
+		case DEEN_INSTALL_STATE_ERROR: return "error";
+		default: return "???";
 	}
-
-	local_cancel = cancel[0];
-
-	if (NULL != cancel_mutex) {
-		pthread_mutex_unlock(cancel_mutex);
-	}
-
-	return local_cancel;
 }
-#endif
 
+void deen_log_install_progress(enum deen_install_state state, float progress) {
+	switch (state) {
+		case DEEN_INSTALL_STATE_INDEXING:
+		case DEEN_INSTALL_STATE_STARTING:
+		case DEEN_INSTALL_STATE_COMPLETED:
+			{
+				int percentage = (int) (100.0f * progress);
+				DEEN_LOG_INFO2("%12s %3d%%", deen_cli_state_to_string(state), percentage);
+			}
+			break;
 
-// ---------------------------------------------------------------
-
+		default:
+			DEEN_LOG_INFO1("%s", deen_cli_state_to_string(state));
+	}
+}
 
 enum deen_install_check_ding_format_check_result deen_install_check_for_ding_format(const char *filename) {
 
@@ -143,7 +137,7 @@ enum deen_install_check_ding_format_check_result deen_install_check_for_ding_for
 	}
 
 	if (DEEN_INSTALL_CHECK_OK == result && fd < 0) {
-		result = DEEN_INSTALL_CHECK_IS_COMPRESSED;
+		result = DEEN_INSTALL_CHECK_IO_PROBLEM;
 	} else {
 		DEEN_LOG_INFO0("candidate file was opened successfully");
 	}
@@ -185,7 +179,7 @@ enum deen_install_check_ding_format_check_result deen_install_check_for_ding_for
 							found_ok_line = DEEN_TRUE;
 							DEEN_LOG_INFO1("candidate file; found ok line '%s'", &buffer[curr]);
 						} else {
-							result = DEEN_INSTALL_CHECK_TOO_SMALL;
+							result = DEEN_INSTALL_CHECK_BAD_FORMAT;
 						}
 					} else {
 						DEEN_LOG_INFO1("candidate file; ignoring comment line '%s'", &buffer[curr]);
@@ -370,8 +364,7 @@ static void deen_index_flush_context_prefixes_to_index_trace_log(deen_index_cont
 	if (deen_is_trace_enabled()) {
 		size_t i;
 
-		fputs(DEEN_PREFIX_TRACE,stdout);
-		//fprintf(stdout, " %8lld <-- { ", (unsigned long long) context->current_ref);
+		fputs(DEEN_PREFIX_TRACE, stdout);
 		fprintf(stdout, " %8lu <-- { ", (unsigned long) context->current_ref);
 
 		for (i = 0; i < context->prefix_count; i++) {
@@ -433,7 +426,8 @@ static deen_bool deen_index_callback(
 			uint8_t percent = (uint8_t) (progress * 100.0);
 
 			if (percent != last_percent) {
-				context2->progress_cb(DEEN_INSTALL_STATE_INDEXING, progress);
+				context2->progress_cb(context2->progress_cb_context,
+					DEEN_INSTALL_STATE_INDEXING, progress);
 				context2->lastprogress = progress;
 			}
 		}
@@ -441,12 +435,7 @@ static deen_bool deen_index_callback(
 	}
 
 	if (len >= DEEN_INDEXING_MIN) {
-
-		if (DEEN_FALSE
-#ifndef __MINGW32__
-			|| deen_install_atomic_cancel_value(context2->cancel_mutex, context2->cancel)
-#endif
-		) {
+		if (context2->is_cancelled_cb(context2->progress_cb_context)) {
 			result = DEEN_FALSE; // stop processing
 		}
 		else {
@@ -488,47 +477,54 @@ static deen_bool deen_index_callback(
 }
 
 
-#define DEEN_INSTALL_RAISE_ERROR progress_cb(DEEN_INSTALL_STATE_ERROR, 0.0f); is_error=DEEN_TRUE;
+deen_bool deen_noop_is_cancelled_cb(void *context) {
+	return DEEN_FALSE;
+}
+
+deen_bool deen_noop_install_progress_cb(
+	void *context, enum deen_install_state state, float progress) {
+	return DEEN_TRUE; // keep going
+}
 
 
-uint8_t deen_install_from_path(
-#ifndef __MINGW32__
-	pthread_mutex_t *cancel_mutex,
-#endif
-	deen_bool *cancel, // boolean
+#define DEEN_INSTALL_RAISE_ERROR progress_cb(process_cb_context, DEEN_INSTALL_STATE_ERROR, 0.0f); is_error=DEEN_TRUE;
+
+
+deen_bool deen_install_from_path(
 	const char *deen_root_dir,
 	const char *ding_filename,
-	deen_install_progress_cb progress_cb) {
+	void *process_cb_context,
+	deen_install_progress_cb progress_cb,
+	deen_is_cancelled_cb is_cancelled_cb) {
+
+	if (NULL == progress_cb) {
+		progress_cb = deen_noop_install_progress_cb;
+	}
+
+	if (NULL == is_cancelled_cb) {
+		is_cancelled_cb = deen_noop_is_cancelled_cb;
+	}
 
 	int fd_data;
 	sqlite3 *db = NULL;
 	deen_bool is_error = DEEN_FALSE;
-	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
-	char *index_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_INDEX) + 2);
+	char *data_path = deen_data_path(deen_root_dir);
+	char *index_path = deen_index_path(deen_root_dir);
 
-	sprintf(data_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_DING_DATA);
-	sprintf(index_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_INDEX);
-
-	progress_cb(DEEN_INSTALL_STATE_STARTING, 0.0f);
+	progress_cb(process_cb_context, DEEN_INSTALL_STATE_STARTING, 0.0f);
 
 	deen_install_init(deen_root_dir);
 
 	// first thing is to copy the file over to the new location.
 
-	if (
-		!is_error
-#ifndef __MINGW32__
-		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
-#endif
-	) {
-
+	if (!is_error && !is_cancelled_cb(process_cb_context)) {
 		int fd_src_data = open(ding_filename,O_RDONLY
 #ifdef __MINGW32__
 			|O_BINARY
 #endif
 		);
 
-		if (-1==fd_src_data) {
+		if (-1 == fd_src_data) {
 			DEEN_LOG_INFO1("unable to open the input data file %s",ding_filename);
 			DEEN_INSTALL_RAISE_ERROR
 		}
@@ -582,14 +578,10 @@ uint8_t deen_install_from_path(
 
 	// create the target sqllite database.
 
-	if (
-		!is_error
-#ifndef __MINGW32__
-		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
-#endif
-		) {
+	if (!is_error && !is_cancelled_cb(process_cb_context)) {
 		if (SQLITE_OK != sqlite3_open_v2(
-			index_path, &db,
+			index_path,
+			&db,
 			SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
 			NULL)) {
 
@@ -598,24 +590,14 @@ uint8_t deen_install_from_path(
 		}
 	}
 
-	if (
-		!is_error
-#ifndef __MINGW32__
-		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
-#endif
-	) {
+	if (!is_error && !is_cancelled_cb(process_cb_context)) {
 		deen_index_init(db);
 		DEEN_LOG_TRACE0("did initialize the index database");
 	}
 
 	fd_data = -1;
 
-	if (
-		!is_error
-#ifndef __MINGW32__
-		&& !deen_install_atomic_cancel_value(cancel_mutex, cancel)
-#endif
-	) {
+	if (!is_error && !is_cancelled_cb(process_cb_context)) {
 		fd_data = open(data_path, O_RDONLY);
 
 		if ((-1==fd_data) || DEEN_CAUSE_ERROR_IN_INSTALL) {
@@ -627,17 +609,15 @@ uint8_t deen_install_from_path(
 		}
 	}
 
-	if (!is_error) {
+	if (!is_error && !is_cancelled_cb(process_cb_context)) {
 		time_t secs_before;
 		deen_index_context index_context;
 
-#ifndef __MINGW32__
-		index_context.cancel_mutex = cancel_mutex;
-		index_context.cancel = cancel; // boolean
-#endif
 		index_context.index_add_context = deen_index_add_context_create(db);
 		index_context.lastprogress = -1.0f;
+		index_context.progress_cb_context = process_cb_context;
 		index_context.progress_cb = progress_cb;
+		index_context.is_cancelled_cb = is_cancelled_cb;
 		index_context.c_buffer_upper = NULL;
 		index_context.c_buffer_upper_len = 0;
 		index_context.current_ref = 0;
@@ -647,30 +627,37 @@ uint8_t deen_install_from_path(
 
 		secs_before = deen_seconds_since_epoc();
 
+		deen_transaction_begin(db);
+
 		if (!deen_for_each_word_from_file(
 			DEEN_BUFFER_SIZE_EACH_WORD_FROM_FILE,
 			fd_data,
 			&deen_index_callback,
 			&index_context)) {
-
-			DEEN_LOG_ERROR1("failure to process the file %s",data_path);
+			DEEN_LOG_ERROR1("failure to process the file %s", data_path);
 			DEEN_INSTALL_RAISE_ERROR
 		}
+
+		deen_transaction_commit(db);
 
 		// print out the performance of the indexing with respect to database
 		// activity
 
 #ifdef DEBUG
-		DEEN_LOG_INFO1("db activity; find existing prefixes = %llu ms", index_context.index_add_context->find_existing_prefixes_millis);
-		DEEN_LOG_INFO1("db activity; add missing prefixes = %llu ms", index_context.index_add_context->add_missing_prefixes_millis);
-		DEEN_LOG_INFO1("db activity; add refs = %llu ms", index_context.index_add_context->add_refs_millis);
+		if (!is_error) {
+			DEEN_LOG_INFO1("db activity; find existing prefixes = %llu ms", index_context.index_add_context->find_existing_prefixes_millis);
+			DEEN_LOG_INFO1("db activity; add missing prefixes = %llu ms", index_context.index_add_context->add_missing_prefixes_millis);
+			DEEN_LOG_INFO1("db activity; add refs = %llu ms", index_context.index_add_context->add_refs_millis);
+		}
 #endif
 
 		// flush any indexes to the database.
 
 		deen_index_flush_context_prefixes_to_index(&index_context);
 
-		DEEN_LOG_INFO1("indexed in %u seconds", deen_seconds_since_epoc() - secs_before);
+		if (!is_error) {
+			DEEN_LOG_INFO1("indexed in %u seconds", deen_seconds_since_epoc() - secs_before);
+		}
 
 		if (NULL != index_context.index_add_context) {
 			deen_index_add_context_free(index_context.index_add_context);
@@ -708,22 +695,30 @@ uint8_t deen_install_from_path(
 	// delete the stored data as well as any partially written
 	// index.
 
-	if (
-		is_error
-#ifndef __MINGW32__
-		|| deen_install_atomic_cancel_value(cancel_mutex, cancel)
-#endif
-	) {
+	if (is_error || is_cancelled_cb(process_cb_context)) {
 		DEEN_LOG_ERROR0("indexing not completed -> clean up files");
 		deen_remove_fileobject(data_path);
-		// deen_remove_fileobject(index_path);
+		deen_remove_fileobject(index_path);
 	}
 
 	free((void *) data_path);
 	free((void *) index_path);
 
+	if (!is_error) {
+		progress_cb(process_cb_context, DEEN_INSTALL_STATE_COMPLETED, 1.0f);
+	} else {
+		if (is_cancelled_cb(process_cb_context)) {
+			progress_cb(process_cb_context, DEEN_INSTALL_STATE_IDLE, 0.0f);
+		}
+	}
+
 	return !is_error;
 }
 
+deen_bool deen_is_installed(const char *deen_root_dir) {
+	char *data_path = (char *) deen_emalloc(strlen(deen_root_dir) + strlen(DEEN_LEAF_DING_DATA) + 2);
+	sprintf(data_path, "%s%s%s", deen_root_dir, DEEN_FILE_SEP, DEEN_LEAF_DING_DATA);
+	return deen_exists_fileobject(data_path);
+}
 
 #endif /* INSTALL_CPP */
