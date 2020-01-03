@@ -167,15 +167,56 @@
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <child>
-              <object class="GtkEntry" id="entry_search_keywords">
+              <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="margin_left">2</property>
-                <property name="margin_right">2</property>
-                <property name="margin_top">2</property>
-                <property name="margin_bottom">2</property>
-                <property name="placeholder_text" translatable="yes">Search...</property>
-                <signal name="activate" handler="on_entry_search_keywords_activate" swapped="no"/>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkEntry" id="entry_search_keywords">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="margin_left">2</property>
+                    <property name="margin_right">2</property>
+                    <property name="margin_top">2</property>
+                    <property name="margin_bottom">2</property>
+                    <property name="placeholder_text" translatable="yes">Search...</property>
+                    <signal name="activate" handler="on_entry_search_keywords_activate" swapped="no"/>
+                    <signal name="changed" handler="on_entry_search_keywords_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButtonBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="layout_style">end</property>
+                    <child>
+                      <object class="GtkButton" id="button_search">
+                        <property name="label">gtk-find</property>
+                        <property name="name">button_search</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_stock">True</property>
+                        <property name="always_show_image">True</property>
+                        <signal name="clicked" handler="on_button_search_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>

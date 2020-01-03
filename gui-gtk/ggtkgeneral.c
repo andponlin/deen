@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2019-2020, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -159,6 +159,7 @@ void deen_ggtk_update_ui() {
 	deen_ggtk_main_stack_update_visible_ui();
 	deen_ggtk_install_file_choice_update_ui();
 	deen_ggtk_install_progress_update_ui();
+	deen_ggtk_search_update_ui();
 }
 
 #define DEEN_GGTK_GET_WIDGET(N) GTK_WIDGET(gtk_builder_get_object(builder, N));
@@ -171,6 +172,7 @@ void deen_ggtk_setup_global_from_builder(GtkBuilder *builder) {
 	deen_ggtk_state_global->widgets->progress_bar_install = DEEN_GGTK_GET_WIDGET("progress_bar_install");
 	deen_ggtk_state_global->widgets->button_install_cancel = DEEN_GGTK_GET_WIDGET("button_install_cancel");
 	deen_ggtk_state_global->widgets->entry_search_keywords = DEEN_GGTK_GET_WIDGET("entry_search_keywords");
+	deen_ggtk_state_global->widgets->button_search = DEEN_GGTK_GET_WIDGET("button_search");
 	deen_ggtk_state_global->widgets->text_view_results = DEEN_GGTK_GET_WIDGET("text_view_results");
 	deen_ggtk_state_global->widgets->label_results_notes = DEEN_GGTK_GET_WIDGET("label_results_notes");
 	deen_ggtk_state_global->widgets->button_results_show_all = DEEN_GGTK_GET_WIDGET("button_results_show_all");

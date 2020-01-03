@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2019-2020, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -56,6 +56,20 @@ void deen_ggtk_update_button_results_show_all(deen_search_result *result) {
 	}
 }
 
+void deen_ggtk_update_button_search() {
+	const guint16 len = gtk_entry_get_text_length(
+		GTK_ENTRY(deen_ggtk_state_global->widgets->entry_search_keywords));
+	gboolean sensitive = FALSE;
+	if (len > 0) {
+		sensitive = TRUE;
+	}
+	gtk_widget_set_sensitive(
+		deen_ggtk_state_global->widgets->button_search, sensitive);
+}
+
+void deen_ggtk_search_update_ui() {
+	deen_ggtk_update_button_search();
+}
 
 void deen_ggtk_search_by_provided_keywords(size_t max_result_count) {
 	deen_search_context *context = deen_ggtk_ensure_search_context();
@@ -116,6 +130,14 @@ void on_entry_search_keywords_activate(GtkEntry *entry) {
 	deen_ggtk_search_by_provided_keywords(DEEN_RESULT_SIZE_DEFAULT);
 }
 
+void on_button_search_clicked(GtkEntry *entry) {
+	deen_ggtk_search_by_provided_keywords(DEEN_RESULT_SIZE_DEFAULT);
+}
+
 void on_button_results_show_all_clicked() {
 	deen_ggtk_search_by_provided_keywords(DEEN_RESULT_SIZE_MAX);
+}
+
+void on_entry_search_keywords_changed() {
+	deen_ggtk_update_button_search();
 }

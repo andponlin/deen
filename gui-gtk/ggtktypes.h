@@ -1,5 +1,5 @@
 /*
- * Copyright 2019, Andrew Lindesay. All Rights Reserved.
+ * Copyright 2019-2020, Andrew Lindesay. All Rights Reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -30,6 +30,7 @@ struct deen_ggtk_widgets {
 	GtkWidget *button_install_cancel;
 
 	GtkWidget *entry_search_keywords;
+	GtkWidget *button_search;
 	GtkWidget *text_view_results;
 	GtkWidget *label_results_notes;
 	GtkWidget *button_results_show_all;
