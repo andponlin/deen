@@ -58,7 +58,7 @@ make
 
 ## Data
 
-The data used with Deen comes from a project known as [Ding](https://www-user.tu-chemnitz.de/~fri/ding/).  You will need to download Ding's data to use Deen.  At the time of writing this data can be found [here](http://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en/de-en.txt.gz).  You will need to decompress the Ding data before use.  By default, Deen will install the data into a ```.deen``` directory in the user's home directory.  To specify another location where Deen should store its data, configure an environment variable ```DEENDATAHOME```.
+The data used with Deen comes from a project known as [Ding](https://www-user.tu-chemnitz.de/~fri/ding/).  You will need to download Ding's data to use Deen.  At the time of writing this data can be found [here](https://ftp.tu-chemnitz.de/pub/Local/urz/ding/de-en-devel/de-en.txt.gz).  You will need to decompress the Ding data before use.  By default, Deen will install the data into a ```.deen``` directory in the user's home directory.  To specify another location where Deen should store its data, configure an environment variable ```DEENDATAHOME```.
 
 ### Removal
 
